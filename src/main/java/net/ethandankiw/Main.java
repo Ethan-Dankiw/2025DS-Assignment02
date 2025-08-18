@@ -31,6 +31,12 @@ public class Main {
 
 				// Get the communication stream for sending stuff to the client
 				PrintWriter toClient = new PrintWriter(client.getOutputStream(), true);
+
+				// Read from the client
+				fromClient.lines().forEach(line -> {
+					logger.info("Client says: " + line);
+					toClient.println("Server received: " + line);
+				});
 			} catch (IOException ioe) {
 				// Log a warning since the client connection isn't as important
 				logger.warning("[CLIENT]: " + ioe.getMessage());
