@@ -16,6 +16,7 @@ public class AggregationServer {
 
 		// If a different port number is provided
 		if (args.length == 1) {
+			// Get the argument from the command line
 			String arg = args[0];
 
 			// If the argument is valid
@@ -25,7 +26,7 @@ public class AggregationServer {
 			}
 		}
 
-		// Start up a server on the given port
+		// Start up a socket server on the given port
 
 		// Print all the args
 		for (String arg : args) {
