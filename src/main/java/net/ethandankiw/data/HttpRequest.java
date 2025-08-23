@@ -18,6 +18,14 @@ public class HttpRequest {
 		body = null;
 	}
 
+	public void parseAndSetMethod(String methodStr) {
+		try {
+			method = RequestMethod.valueOf(methodStr.toUpperCase());
+		} catch (IllegalArgumentException iae) {
+			method = RequestMethod.NONE;
+		}
+	}
+
 
 	public RequestMethod getMethod() {
 		return method;

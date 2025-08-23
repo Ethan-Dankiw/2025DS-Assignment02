@@ -3,7 +3,6 @@ package net.ethandankiw.utils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.AbstractMap;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +10,8 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import net.ethandankiw.data.HttpRequest;
 
 public class HttpParser {
 
@@ -21,28 +22,83 @@ public class HttpParser {
 	}
 
 
-	public static Optional<String> parseRequestLine(BufferedReader fromClient) {
+	public static Optional<HttpRequest> parseRequest(BufferedReader fromClient) {
+		// Create the data structure for a http request
+		HttpRequest request = new HttpRequest();
+
+		// Get the request from the client
+		List<String> requestLine = HttpParser.parseRequestLine(fromClient);
+
+		// If there is a valid request line
+		if (requestLine.isEmpty()) {
+			logger.error("Invalid request as there is no request line");
+			return Optional.empty();
+		}
+
+		// Store the request line on the request object
+		request.parseAndSetMethod(requestLine.getFirst());
+		request.setPath(requestLine.get(1));
+
+		// Get the header lines from the client
+		Map<String, String> headers = HttpParser.parseHeaders(fromClient);
+
+		// If there are no headers
+		if (headers.isEmpty()) {
+			logger.error("Invalid request as there are no headers");
+			return Optional.empty();
+		}
+
+		// Store the headers on the request object
+		request.setHeaders(headers);
+
+		try {
+			// Get the content length of the body
+			String contentLengthStr = headers.get("Content-Length");
+			// Parse the content length string into a value
+			int contentLength = Integer.parseInt(contentLengthStr);
+
+			// Parse the body from the client using the content length
+			String body = HttpParser.parseBody(fromClient, contentLength);
+		} catch (NumberFormatException nfe) {
+			logger.error("Unable to parse body as content length is invalid: {}", nfe.getMessage());
+			return Optional.empty();
+		}
+
+		return Optional.of(request);
+	}
+
+
+	private static List<String> parseRequestLine(BufferedReader fromClient) {
 		try {
 			// Read the request line (e.g., "GET /path HTTP/1.1")
 			String request = fromClient.readLine();
 
 			// Check if the request line is invalid
 			if (request == null || request.isBlank()) {
-				return Optional.empty();
+				return List.of();
+			}
+
+			// Split the request line by whitespace (e.g., ["GET", "/path", "HTTP/1.1"])
+			String[] splitRequest = request.split(" ");
+
+			// Ensure that the length is valid
+			if (splitRequest.length != 3) {
+				logger.error("Request line has an invalid number of parameters: {}", request);
+				return List.of();
 			}
 
 			// If valid, return the request line
-			return Optional.of(request);
+			return List.of(splitRequest[0], splitRequest[1], splitRequest[2]);
 		} catch (IOException ioe) {
 			logger.error("Unable to parse request line: {}", ioe.getMessage());
 		}
 
 		// If invalid request, return empty string
-		return Optional.empty();
+		return List.of();
 	}
 
 
-	public static Map<String, String> parseHeaders(BufferedReader fromClient) {
+	private static Map<String, String> parseHeaders(BufferedReader fromClient) {
 		// Define the map of header key values paris
 		Map<String, String> headers = new HashMap<>();
 
@@ -64,7 +120,8 @@ public class HttpParser {
 		return headers;
 	}
 
-	public static String parseBody(BufferedReader fromClient, Integer contentLength) {
+
+	private static String parseBody(BufferedReader fromClient, Integer contentLength) {
 		// If no content length is provided
 		if (contentLength <= 0) {
 			return "";
