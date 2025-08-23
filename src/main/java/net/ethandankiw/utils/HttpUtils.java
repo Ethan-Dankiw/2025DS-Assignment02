@@ -12,7 +12,9 @@ import org.slf4j.LoggerFactory;
 
 public class HttpUtils {
 
-	public static Logger logger = LoggerFactory.getLogger(HttpUtils.class);
+	private HttpUtils() {}
+
+	public static final Logger logger = LoggerFactory.getLogger(HttpUtils.class);
 
 	public static Optional<String> parseRequestLine(BufferedReader fromClient) {
 		try {
@@ -34,25 +36,29 @@ public class HttpUtils {
 		return Optional.empty();
 	}
 
+
 	public static Map<String, String> parseHeaders(BufferedReader fromClient) {
 		// Define the map of header key values paris
 		Map<String, String> headers = new HashMap<>();
 
-		// Loop over the header fields
-		fromClient.lines().forEach(line -> {
-			// If EOF of CRLF is reached
-			if (line == null || line.isBlank()) {
-				return;
-			}
+		try {
+			// Define a variable for storing the header line
+			String headerLine;
 
-			// Otherwise parse header fields
-			AbstractMap.SimpleEntry<String, String> header = parseSingleHeader(line);
-			headers.put(header.getKey(), header.getValue());
-		});
+			// Loop over the header fields until an empty line or EOF is reached
+			while ((headerLine = fromClient.readLine()) != null && !headerLine.isBlank()) {
+				// Otherwise parse header fields
+				AbstractMap.SimpleEntry<String, String> header = parseSingleHeader(headerLine);
+				headers.put(header.getKey(), header.getValue());
+			}
+		} catch (Exception e) {
+			logger.error("Error reading headers: {}", e.getMessage());
+		}
 
 		// Return the parsed headers
 		return headers;
 	}
+
 
 	// https://www.baeldung.com/java-pairs
 	private static AbstractMap.SimpleEntry<String, String> parseSingleHeader(String headerLine) {
