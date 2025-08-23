@@ -6,10 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -24,12 +21,11 @@ import net.ethandankiw.utils.SocketUtils;
 public class RequestBalancer {
 
 	private static final Logger logger = LoggerFactory.getLogger(RequestBalancer.class);
-
+	// Define a pool of threads to handle client requests
+	ExecutorService pool = Executors.newFixedThreadPool(GlobalConstants.MAX_THREADS_FOR_CLIENT_REQUESTS);
 	// Store the server socket for load balancing
 	private ServerSocket server = null;
 
-	// Define a pool of threads to handle client requests
-	ExecutorService pool = Executors.newFixedThreadPool(GlobalConstants.MAX_THREADS_FOR_CLIENT_REQUESTS);
 
 	/**
 	 * Constructor for initialising the origin server to balance client requests to
@@ -37,6 +33,7 @@ public class RequestBalancer {
 	public RequestBalancer(ServerSocket server) {
 		this.server = server;
 	}
+
 
 	/**
 	 * Start accepting connections for the server
@@ -47,6 +44,7 @@ public class RequestBalancer {
 			acceptConnection();
 		}
 	}
+
 
 	/**
 	 * Accept a new connection to the server
@@ -73,6 +71,7 @@ public class RequestBalancer {
 		// Extra clients that would exceed the max thread count wait in a queue
 		pool.submit(() -> handleClientRequest(client));
 	}
+
 
 	/**
 	 * Handle a client request

@@ -12,9 +12,12 @@ import org.slf4j.LoggerFactory;
 
 public class HttpUtils {
 
-	private HttpUtils() {}
-
 	public static final Logger logger = LoggerFactory.getLogger(HttpUtils.class);
+
+
+	private HttpUtils() {
+	}
+
 
 	public static Optional<String> parseRequestLine(BufferedReader fromClient) {
 		try {

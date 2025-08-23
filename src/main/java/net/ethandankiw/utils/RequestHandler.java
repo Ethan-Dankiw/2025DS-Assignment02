@@ -1,5 +1,7 @@
 package net.ethandankiw.utils;
 
 public class RequestHandler {
-	public static void handleRequest() {}
+
+	public static void handleRequest() {
+	}
 }
