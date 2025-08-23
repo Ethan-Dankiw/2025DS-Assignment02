@@ -97,15 +97,10 @@ public class RequestBalancer {
 
 			logger.info("Parsed Request Line: {}", optionalRequestLine.get());
 
-			try {
-				// Get the header lines from the client
-				Map<String, String> headers = HttpUtils.parseHeaders(fromClient);
+			// Get the header lines from the client
+			Map<String, String> headers = HttpUtils.parseHeaders(fromClient);
 
-				headers.forEach((key, value) -> logger.info("Parsed Header: {} -> {}", key, value));
-			} catch (IOException ioe) {
-				logger.error("Unable to process client request headers: {}", ioe.getMessage());
-				return;
-			}
+			headers.forEach((key, value) -> logger.info("Parsed Header: {} -> {}", key, value));
 
 			// Print each line from the client
 			fromClient.lines().forEach(logger::info);
