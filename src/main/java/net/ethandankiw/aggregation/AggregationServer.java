@@ -1,9 +1,7 @@
-package net.ethandankiw.network;
-
-import java.net.ServerSocket;
+package net.ethandankiw.aggregation;
 
 import net.ethandankiw.GlobalConstants;
-import net.ethandankiw.utils.ServerUtils;
+import net.ethandankiw.network.HttpServer;
 
 public class AggregationServer {
 
@@ -25,13 +23,10 @@ public class AggregationServer {
 			}
 		}
 
-		// Create a server on a given port
-		ServerSocket server = ServerUtils.createServer(aggregationServerPort);
+		// Create a new HTTP server
+		HttpServer server = new HttpServer(AggregationServer.class.getName(), aggregationServerPort);
 
-		// Create a load balancer for the server
-		RequestBalancer balancer = new RequestBalancer(server);
-
-		// Start accepting connections to the server
-		balancer.startAcceptingConnections();
+		// Start the server
+		server.start();
 	}
 }

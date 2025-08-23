@@ -19,17 +19,15 @@ public class SocketUtils {
 
 	// Create a Server Socket on a port
 	public static Optional<ServerSocket> createServerSocket(Integer port) {
-		// Attempt to create a server socket
 		try {
+			// Attempt to create a server socket
 			ServerSocket server = new ServerSocket(port);
-			logger.info("Server started on port {}", port);
-			logger.info("Waiting for a client to connect...");
 
 			// Return the socket
 			return Optional.of(server);
 		} catch (IOException ioe) {
 			// Log a severe error since the server cannot be created
-			logger.error("[SERVER]: {}", ioe.getMessage());
+			logger.error("Unable to create server socket: {}", ioe.getMessage());
 		}
 
 		// Default to no server
@@ -47,7 +45,7 @@ public class SocketUtils {
 			return Optional.of(client);
 		} catch (IOException ioe) {
 			// Log a warning since the client connection isn't as important
-			logger.warn("[CLIENT]: {}", ioe.getMessage());
+			logger.warn("Unable to make a connection to the client: {}", ioe.getMessage());
 		}
 
 		// Default to no client connection
