@@ -64,4 +64,11 @@ public class LoadBalancer {
 		// Extra clients that would exceed the max thread count wait in a queue
 		pool.submit(() -> handleClientRequest(client));
 	}
+
+	/**
+	 * Handle a client request
+	 */
+	public void handleClientRequest(Socket client) {
+
+	}
 }
