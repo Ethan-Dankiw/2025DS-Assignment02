@@ -38,6 +38,7 @@ public class HttpParser {
 		// Store the request line on the request object
 		request.parseAndSetMethod(requestLine.getFirst());
 		request.setPath(requestLine.get(1));
+		request.setVersion(requestLine.get(2));
 
 		// Get the header lines from the client
 		Map<String, String> headers = HttpParser.parseHeaders(fromClient);
@@ -59,6 +60,9 @@ public class HttpParser {
 
 			// Parse the body from the client using the content length
 			String body = HttpParser.parseBody(fromClient, contentLength);
+
+			// Store the body on the request
+			request.setBody(body);
 		} catch (NumberFormatException nfe) {
 			logger.error("Unable to parse body as content length is invalid: {}", nfe.getMessage());
 			return Optional.empty();

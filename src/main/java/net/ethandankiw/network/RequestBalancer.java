@@ -88,6 +88,19 @@ public class RequestBalancer {
 
 			// Parse the request from the client
 			Optional<HttpRequest> optionalRequest = HttpParser.parseRequest(fromClient);
+
+			// If the request is invalid
+			if (optionalRequest.isEmpty()) {
+				logger.warn("Invalid request from client");
+				return;
+			}
+
+			// If the request is valid
+			HttpRequest request = optionalRequest.get();
+
+			// Print the request
+			logger.debug("Parsed HTTP Request: {}" , request.toString());
+
 		} catch (IOException ioe) {
 			logger.warn("Unable to get input stream for client: {}", ioe.getMessage());
 		} finally {
