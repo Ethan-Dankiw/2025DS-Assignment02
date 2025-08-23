@@ -1,9 +1,6 @@
 package net.ethandankiw.utils;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Optional;
@@ -11,18 +8,20 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.ethandankiw.data.ClientSocket;
-
 public class SocketUtils {
 
-	private SocketUtils() {}
-
 	public static final Logger logger = LoggerFactory.getLogger(SocketUtils.class);
+
+
+	private SocketUtils() {
+	}
+
 
 	// Create a Server Socket on a port
 	public static Optional<ServerSocket> createServerSocket(Integer port) {
 		// Attempt to create a server socket
-		try (ServerSocket server = new ServerSocket(port)) {
+		try {
+			ServerSocket server = new ServerSocket(port);
 			logger.info("Server started on port {}", port);
 			logger.info("Waiting for a client to connect...");
 
@@ -37,10 +36,12 @@ public class SocketUtils {
 		return Optional.empty();
 	}
 
+
 	// Accept a client connection to a server
 	public static Optional<Socket> acceptClientConnection(ServerSocket server) {
 		// Accept a connection from the server
-		try (Socket client = server.accept()) {
+		try {
+			Socket client = server.accept();
 			logger.info("Client connected: {}", client.getInetAddress());
 
 			return Optional.of(client);
