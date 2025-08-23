@@ -1,5 +1,6 @@
 package net.ethandankiw.utils;
 
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Optional;
 
@@ -25,6 +26,19 @@ public class ServerUtils {
 
 		// If it exists, get the socket server
 		ServerSocket server = optionalServer.get();
+
+		// Always close the server if any errors arise
+		try {
+
+		} finally {
+			// Attempt to close the server socket
+			try {
+				server.close();
+				logger.info("Server socket closed");
+			} catch (IOException ioe) {
+				logger.error("Unable to close sever socket: {}", ioe.getMessage());
+			}
+		}
 	}
 
 }
