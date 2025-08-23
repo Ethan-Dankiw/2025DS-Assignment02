@@ -1,4 +1,4 @@
-package net.ethandankiw.server.aggregation;
+package net.ethandankiw.server;
 
 import java.io.IOException;
 import java.net.ServerSocket;

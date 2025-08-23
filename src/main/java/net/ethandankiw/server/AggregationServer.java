@@ -1,4 +1,4 @@
-package net.ethandankiw.server.aggregation;
+package net.ethandankiw.server;
 
 import net.ethandankiw.GlobalConstants;
 import net.ethandankiw.data.HttpServer;
