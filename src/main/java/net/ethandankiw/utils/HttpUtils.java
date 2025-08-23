@@ -13,12 +13,12 @@ import org.slf4j.LoggerFactory;
 
 import net.ethandankiw.data.HttpRequest;
 
-public class HttpParser {
+public class HttpUtils {
 
-	public static final Logger logger = LoggerFactory.getLogger(HttpParser.class);
+	public static final Logger logger = LoggerFactory.getLogger(HttpUtils.class);
 
 
-	private HttpParser() {
+	private HttpUtils() {
 	}
 
 
@@ -27,7 +27,7 @@ public class HttpParser {
 		HttpRequest request = new HttpRequest();
 
 		// Get the request from the client
-		List<String> requestLine = HttpParser.parseRequestLine(fromClient);
+		List<String> requestLine = HttpUtils.parseRequestLine(fromClient);
 
 		// If there is a valid request line
 		if (requestLine.isEmpty()) {
@@ -41,7 +41,7 @@ public class HttpParser {
 		request.setVersion(requestLine.get(2));
 
 		// Get the header lines from the client
-		Map<String, String> headers = HttpParser.parseHeaders(fromClient);
+		Map<String, String> headers = HttpUtils.parseHeaders(fromClient);
 
 		// If there are no headers
 		if (headers.isEmpty()) {
@@ -59,7 +59,7 @@ public class HttpParser {
 			int contentLength = Integer.parseInt(contentLengthStr);
 
 			// Parse the body from the client using the content length
-			String body = HttpParser.parseBody(fromClient, contentLength);
+			String body = HttpUtils.parseBody(fromClient, contentLength);
 
 			// Store the body on the request
 			request.setBody(body);

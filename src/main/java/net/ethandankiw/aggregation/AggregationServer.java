@@ -1,7 +1,7 @@
 package net.ethandankiw.aggregation;
 
 import net.ethandankiw.GlobalConstants;
-import net.ethandankiw.network.HttpServer;
+import net.ethandankiw.data.HttpServer;
 
 public class AggregationServer {
 
@@ -24,9 +24,15 @@ public class AggregationServer {
 		}
 
 		// Create a new HTTP server
-		HttpServer server = new HttpServer(AggregationServer.class.getName(), aggregationServerPort);
+		HttpServer server = new HttpServer(AggregationServer.class.getSimpleName(), aggregationServerPort);
 
-		// Start the server
-		server.start();
+		// Initialise the server
+		server.init();
+
+		// Create a load balancer for the HTTP server
+		LoadBalancer balancer = new LoadBalancer(server);
+
+		// Start balancing incoming client requests to the server
+		balancer.startListening();
 	}
 }
