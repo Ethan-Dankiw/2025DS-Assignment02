@@ -64,25 +64,31 @@ public class HttpParser {
 		return headers;
 	}
 
-	public static List<String> parseBody(BufferedReader fromClient) {
-		// Define the list of body lines
-		List<String> body = new ArrayList<>();
-
-		try {
-			// Define a variable for storing the lines in the body
-			String bodyLine;
-
-			// Loop over the header fields until an empty line or EOF is reached
-			while ((bodyLine = fromClient.readLine()) != null && !bodyLine.isBlank()) {
-				// Store the trimmed body line
-				body.add(bodyLine.trim());
-			}
-		} catch (Exception e) {
-			logger.error("Error reading body: {}", e.getMessage());
+	public static String parseBody(BufferedReader fromClient, Integer contentLength) {
+		// If no content length is provided
+		if (contentLength <= 0) {
+			return "";
 		}
 
-		// Return the parsed body
-		return body;
+		// Define the character buffer to read the body to
+		char[] buffer = new char[contentLength];
+
+		try {
+			// Attempt to read the body to the character buffer
+			int charsRead = fromClient.read(buffer, 0, contentLength);
+
+			// If the number of chars read is valid
+			if (charsRead > 0) {
+				// Parse the buffer to a string
+				return new String(buffer, 0, charsRead);
+			}
+		} catch (IOException ioe) {
+			logger.warn("Unable to read body to buffer: {}", ioe.getMessage());
+			return "";
+		}
+
+		// By default, return an empty string
+		return "";
 	}
 
 

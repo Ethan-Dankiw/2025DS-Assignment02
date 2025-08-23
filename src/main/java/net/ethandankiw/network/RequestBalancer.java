@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -99,10 +100,27 @@ public class RequestBalancer {
 			// Get the header lines from the client
 			Map<String, String> headers = HttpParser.parseHeaders(fromClient);
 
+			// If there are no headers
+			if (headers.isEmpty()) {
+				logger.error("Invalid request as there are no headers");
+				return;
+			}
+
 			headers.forEach((key, value) -> logger.info("Parsed Header: {} -> {}", key, value));
 
-			// Print each line from the client
-			fromClient.lines().forEach(logger::info);
+			try {
+				// Get the content length of the body
+				String contentLengthStr = headers.get("Content-Length");
+				// Parse the content length string into a value
+				int contentLength = Integer.parseInt(contentLengthStr);
+
+				// Parse the body from the client using the content length
+				String body = HttpParser.parseBody(fromClient, contentLength);
+
+				logger.info("Parsed Body: {}", body);
+			} catch (NumberFormatException nfe) {
+				logger.error("Unable to parse body as content length is invalid: {}", nfe.getMessage());
+			}
 		} catch (IOException ioe) {
 			logger.warn("Unable to get input stream for client: {}", ioe.getMessage());
 		} finally {
