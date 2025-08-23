@@ -1,6 +1,5 @@
-package net.ethandankiw;
+package net.ethandankiw.data;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -8,18 +7,20 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 
 import java.net.Socket;
-import java.util.logging.Logger;
 
-public class Main {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-	private static final Logger logger = Logger.getLogger(Main.class.getName());
+import net.ethandankiw.GlobalConstants;
 
-	private static final int PORT = 8080;
+public class SocketServer {
+
+	private static final Logger logger = LoggerFactory.getLogger(SocketServer.class);
 
 	public static void main(String[] args) {
 		// Create a Server Socket on port 8080
-		try (ServerSocket server = new ServerSocket(PORT)) {
-			logger.info("Server started on port " + PORT);
+		try (ServerSocket server = new ServerSocket(GlobalConstants.SERVER_PORT)) {
+			logger.info("Server started on port " + GlobalConstants.SERVER_PORT);
 			logger.info("Waiting for a client to connect...");
 
 			// Accept a connection from the server
@@ -39,11 +40,11 @@ public class Main {
 				});
 			} catch (IOException ioe) {
 				// Log a warning since the client connection isn't as important
-				logger.warning("[CLIENT]: " + ioe.getMessage());
+				logger.warn("[CLIENT]: " + ioe.getMessage());
 			}
 		} catch (IOException ioe) {
 			// Log a severe error since the server cannot be created
-			logger.severe("[SERVER]: " + ioe.getMessage());
+			logger.error("[SERVER]: " + ioe.getMessage());
 		}
 	}
 }
