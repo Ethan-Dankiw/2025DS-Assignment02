@@ -13,9 +13,12 @@ import org.slf4j.LoggerFactory;
 
 public class ServerUtils {
 
-	private ServerUtils() {}
-
 	private static final Logger logger = LoggerFactory.getLogger(ServerUtils.class);
+
+
+	private ServerUtils() {
+	}
+
 
 	// Create a http server on a given port
 	public static void createServer(Integer port) {

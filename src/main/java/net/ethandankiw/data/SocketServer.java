@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
-
 import java.net.Socket;
 
 import org.slf4j.Logger;
@@ -16,6 +15,7 @@ import net.ethandankiw.GlobalConstants;
 public class SocketServer {
 
 	private static final Logger logger = LoggerFactory.getLogger(SocketServer.class);
+
 
 	public static void main(String[] args) {
 		// Create a Server Socket on port 8080
