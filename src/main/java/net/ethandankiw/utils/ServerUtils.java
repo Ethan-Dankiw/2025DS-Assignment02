@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Optional;
@@ -48,7 +49,10 @@ public class ServerUtils {
 				}
 
 				// Always close the client connection
-				try (Socket client = optionalConnection.get()) {
+				try {
+					// Get the connection
+					Socket client = optionalConnection.get();
+
 					// Get the communication stream being sent from the client
 					BufferedReader fromClient = new BufferedReader(new InputStreamReader(client.getInputStream()));
 
@@ -60,8 +64,13 @@ public class ServerUtils {
 						logger.info("Client says: {}", line);
 						toClient.println("Server received: " + line);
 					});
+
+					client.close();
 				} catch (IOException ioe) {
 					logger.warn("Client connection error: {}", ioe.getMessage());
+				} catch (UncheckedIOException e) {
+					// This is normal when the client disconnects
+					logger.info("Client disconnected: {}", e.getCause().getMessage());
 				}
 			}
 		} finally {
