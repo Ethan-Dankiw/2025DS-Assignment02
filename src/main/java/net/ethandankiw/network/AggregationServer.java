@@ -1,7 +1,12 @@
 package net.ethandankiw.network;
 
+import java.net.ServerSocket;
+import java.util.MissingResourceException;
+import java.util.Optional;
+
 import net.ethandankiw.GlobalConstants;
 import net.ethandankiw.utils.ServerUtils;
+import net.ethandankiw.utils.SocketUtils;
 
 public class AggregationServer {
 
@@ -23,7 +28,13 @@ public class AggregationServer {
 			}
 		}
 
-		// Create a server on the given port
-		ServerUtils.createServer(aggregationServerPort);
+		// Create a server on a given port
+		ServerSocket server = ServerUtils.createServer(aggregationServerPort);
+
+		// Create a load balancer for the server
+		RequestBalancer balancer = new RequestBalancer(server);
+
+		// Start accepting connections to the server
+		balancer.startAcceptingConnections();
 	}
 }

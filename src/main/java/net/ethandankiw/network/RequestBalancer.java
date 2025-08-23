@@ -13,9 +13,9 @@ import org.slf4j.LoggerFactory;
 import net.ethandankiw.GlobalConstants;
 import net.ethandankiw.utils.SocketUtils;
 
-public class LoadBalancer {
+public class RequestBalancer {
 
-	private static final Logger logger = LoggerFactory.getLogger(LoadBalancer.class);
+	private static final Logger logger = LoggerFactory.getLogger(RequestBalancer.class);
 
 	// Store the server socket for load balancing
 	private ServerSocket server = null;
@@ -26,23 +26,24 @@ public class LoadBalancer {
 	/**
 	 * Constructor for initialising the origin server to balance client requests to
 	 */
-	public LoadBalancer(Integer serverPort) throws MissingResourceException {
-		// Start up a socket server on the given port
-		Optional<ServerSocket> optionalServer = SocketUtils.createServerSocket(serverPort);
+	public RequestBalancer(ServerSocket server) {
+		this.server = server;
+	}
 
-		// If the server doesn't exist
-		if (optionalServer.isEmpty()) {
-			throw new MissingResourceException("Server Socket cannot be created", LoadBalancer.class.getName(), ServerSocket.class.getName());
+	/**
+	 * Start accepting connections for the server
+	 */
+	public void startAcceptingConnections() {
+		// Always accept connections from clients to the server
+		while (true) {
+			acceptConnection();
 		}
-
-		// If it exists, get the socket server
-		server = optionalServer.get();
 	}
 
 	/**
 	 * Accept a new connection to the server
 	 */
-	public void acceptConnection() {
+	private void acceptConnection() {
 		// If the server isn't initialised
 		if (server == null) {
 			throw new NullPointerException("Server Socket does not exist");
@@ -68,7 +69,7 @@ public class LoadBalancer {
 	/**
 	 * Handle a client request
 	 */
-	public void handleClientRequest(Socket client) {
+	private void handleClientRequest(Socket client) {
 
 	}
 }
