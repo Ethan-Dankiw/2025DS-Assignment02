@@ -3,19 +3,21 @@ package net.ethandankiw.utils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class HttpUtils {
+public class HttpParser {
 
-	public static final Logger logger = LoggerFactory.getLogger(HttpUtils.class);
+	public static final Logger logger = LoggerFactory.getLogger(HttpParser.class);
 
 
-	private HttpUtils() {
+	private HttpParser() {
 	}
 
 
@@ -60,6 +62,27 @@ public class HttpUtils {
 
 		// Return the parsed headers
 		return headers;
+	}
+
+	public static List<String> parseBody(BufferedReader fromClient) {
+		// Define the list of body lines
+		List<String> body = new ArrayList<>();
+
+		try {
+			// Define a variable for storing the lines in the body
+			String bodyLine;
+
+			// Loop over the header fields until an empty line or EOF is reached
+			while ((bodyLine = fromClient.readLine()) != null && !bodyLine.isBlank()) {
+				// Store the trimmed body line
+				body.add(bodyLine.trim());
+			}
+		} catch (Exception e) {
+			logger.error("Error reading body: {}", e.getMessage());
+		}
+
+		// Return the parsed body
+		return body;
 	}
 
 

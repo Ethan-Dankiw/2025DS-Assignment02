@@ -1,4 +1,4 @@
-package net.ethandankiw.utils;
+package net.ethandankiw.network;
 
 public class RequestHandler {
 

@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.ethandankiw.GlobalConstants;
-import net.ethandankiw.utils.HttpUtils;
+import net.ethandankiw.utils.HttpParser;
 import net.ethandankiw.utils.SocketUtils;
 
 public class RequestBalancer {
@@ -86,7 +86,7 @@ public class RequestBalancer {
 			BufferedReader fromClient = new BufferedReader(new InputStreamReader(stream));
 
 			// Get the request line from the client
-			Optional<String> optionalRequestLine = HttpUtils.parseRequestLine(fromClient);
+			Optional<String> optionalRequestLine = HttpParser.parseRequestLine(fromClient);
 
 			// If the request line is invalid
 			if (optionalRequestLine.isEmpty()) {
@@ -97,7 +97,7 @@ public class RequestBalancer {
 			logger.info("Parsed Request Line: {}", optionalRequestLine.get());
 
 			// Get the header lines from the client
-			Map<String, String> headers = HttpUtils.parseHeaders(fromClient);
+			Map<String, String> headers = HttpParser.parseHeaders(fromClient);
 
 			headers.forEach((key, value) -> logger.info("Parsed Header: {} -> {}", key, value));
 
