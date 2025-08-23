@@ -18,7 +18,7 @@ public class LoadBalancer {
 	private static final Logger logger = LoggerFactory.getLogger(LoadBalancer.class);
 
 	// Store the server socket for load balancing
-	private static ServerSocket server = null;
+	private ServerSocket server = null;
 
 	// Define a pool of threads to handle client requests
 	ExecutorService pool = Executors.newFixedThreadPool(GlobalConstants.MAX_THREADS_FOR_CLIENT_REQUESTS);
