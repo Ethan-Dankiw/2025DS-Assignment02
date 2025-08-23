@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -99,7 +98,10 @@ public class RequestBalancer {
 			HttpRequest request = optionalRequest.get();
 
 			// Print the request
-			logger.debug("Parsed HTTP Request: {}" , request.toString());
+			logger.debug("Parsed HTTP Request: {}", request);
+
+			// Handle the request
+			RequestHandler.handleRequest(request);
 
 		} catch (IOException ioe) {
 			logger.warn("Unable to get input stream for client: {}", ioe.getMessage());
