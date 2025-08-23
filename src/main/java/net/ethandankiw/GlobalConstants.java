@@ -11,4 +11,7 @@ public enum GlobalConstants {
 
 	// IP address for client-server communication
 	public static final String SERVER_IP = "localhost";
+
+	// Maximum number of threads to handle incoming client requests
+	public static final Integer MAX_THREADS_FOR_CLIENT_REQUESTS = 100;
 }

@@ -2,13 +2,15 @@ package net.ethandankiw.network;
 
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.rmi.ConnectException;
 import java.util.MissingResourceException;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.ethandankiw.GlobalConstants;
 import net.ethandankiw.utils.SocketUtils;
 
 public class LoadBalancer {
@@ -16,10 +18,10 @@ public class LoadBalancer {
 	private static final Logger logger = LoggerFactory.getLogger(LoadBalancer.class);
 
 	// Store the server socket for load balancing
-	private static ServerSocket _server = null;
+	private static ServerSocket server = null;
 
 	// Define a pool of threads to handle client requests
-	ExecutorService pool = Executors.newFixedThreadPool(100); // cap at 100
+	ExecutorService pool = Executors.newFixedThreadPool(GlobalConstants.MAX_THREADS_FOR_CLIENT_REQUESTS);
 
 	/**
 	 * Constructor for initialising the origin server to balance client requests to
@@ -34,7 +36,7 @@ public class LoadBalancer {
 		}
 
 		// If it exists, get the socket server
-		_server = optionalServer.get();
+		server = optionalServer.get();
 	}
 
 	/**
@@ -42,12 +44,12 @@ public class LoadBalancer {
 	 */
 	public void acceptConnection() {
 		// If the server isn't initialised
-		if (_server == null) {
+		if (server == null) {
 			throw new NullPointerException("Server Socket does not exist");
 		}
 
 		// Accept a connection from a client
-		Optional<Socket> optionalConnection = SocketUtils.acceptClientConnection(_server);
+		Optional<Socket> optionalConnection = SocketUtils.acceptClientConnection(server);
 
 		// If the connection was unable to be established
 		if (optionalConnection.isEmpty()) {
@@ -59,6 +61,7 @@ public class LoadBalancer {
 		Socket client = optionalConnection.get();
 
 		// Handle the client connection on a new thread
-
+		// Extra clients that would exceed the max thread count wait in a queue
+		pool.submit(() -> handleClientRequest(client));
 	}
 }
