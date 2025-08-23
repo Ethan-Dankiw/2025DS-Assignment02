@@ -35,6 +35,8 @@ public class ServerUtils {
 		// If it exists, get the socket server
 		ServerSocket server = optionalServer.get();
 
+		// Create a pool of threads to handle client connections
+
 		// Always close the server if any errors arise
 		try {
 			// Always accept connections from clients
@@ -47,6 +49,9 @@ public class ServerUtils {
 					logger.error("Unable to accept a connection to the client");
 					continue;
 				}
+
+				// If the connection was accepted, handle the client connection on a new thread
+
 
 				// Always close the client connection
 				try {
