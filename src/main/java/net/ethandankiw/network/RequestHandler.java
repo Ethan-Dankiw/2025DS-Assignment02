@@ -8,6 +8,10 @@ import net.ethandankiw.data.RequestMethod;
 
 public class RequestHandler {
 
+	private RequestHandler() {
+	}
+
+
 	private static final Logger logger = LoggerFactory.getLogger(RequestHandler.class);
 
 
