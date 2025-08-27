@@ -22,7 +22,7 @@ public class JsonUtils {
 	}
 
 
-	public static String parseJSON(Map<String, String> json) {
+	public static String parseToString(Map<String, String> json) {
 		// Create a string build
 		StringBuilder builder = new StringBuilder();
 
@@ -54,7 +54,7 @@ public class JsonUtils {
 	}
 
 
-	public static Map<String, String> parseFile(File file) {
+	public static Map<String, String> parseToJSON(File file) {
 
 		// Create a map of key value pairs from the File
 		Map<String, String> json = new HashMap<>();
