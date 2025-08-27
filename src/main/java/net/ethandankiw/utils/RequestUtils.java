@@ -14,11 +14,11 @@ import net.ethandankiw.data.HttpRequest;
 
 public class RequestUtils {
 
+	private static final Logger logger = LoggerFactory.getLogger(RequestUtils.class);
+
+
 	private RequestUtils() {
 	}
-
-
-	private static final Logger logger = LoggerFactory.getLogger(RequestUtils.class);
 
 
 	/**

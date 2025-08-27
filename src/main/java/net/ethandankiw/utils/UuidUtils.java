@@ -7,7 +7,9 @@ public class UuidUtils {
 	private UuidUtils() {
 	}
 
+
 	public static String generateUUID() {
-		return UUID.randomUUID().toString();
+		return UUID.randomUUID()
+				   .toString();
 	}
 }

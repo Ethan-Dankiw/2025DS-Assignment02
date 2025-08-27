@@ -1,4 +1,4 @@
-package net.ethandankiw.data;
+package net.ethandankiw.server;
 
 import java.net.ServerSocket;
 import java.util.Optional;
@@ -17,7 +17,6 @@ public class HttpServer {
 	private final String name;
 	private final Integer port;
 
-
 	private ServerSocket socket;
 
 
@@ -26,25 +25,25 @@ public class HttpServer {
 		this.port = port;
 	}
 
+
 	public void start() {
-		logger.info("[{}] Server starting...", name);
+		logger.info("[{}] Server starting...", getName());
 
 		// Attempt to create a server socket on the provided port
-		Optional<ServerSocket> serverSocket = SocketUtils.createServerSocket(port);
+		Optional<ServerSocket> serverSocket = SocketUtils.createServerSocket(getPort());
 
 		// If the attempt was unsuccessful
 		if (serverSocket.isEmpty()) {
-			logger.error("[{}] Unable to start server on port {}", name, port);
+			logger.error("[{}] Unable to start server on port {}", getName(), getPort());
 			return;
 		}
 
 		// If the attempt was successful, log the success
-		logger.info("[{}] Accepting requests on port {}", name, port);
+		logger.info("[{}] Accepting requests on port {}", getName(), getPort());
 
 		// Store the socket on the http server
 		this.socket = serverSocket.get();
 	}
-
 
 
 	@NotNull

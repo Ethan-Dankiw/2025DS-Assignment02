@@ -1,4 +1,4 @@
-package net.ethandankiw.server;
+package net.ethandankiw.aggregation;
 
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -12,13 +12,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.ethandankiw.GlobalConstants;
-import net.ethandankiw.data.HttpServer;
+import net.ethandankiw.server.HttpServer;
+import net.ethandankiw.server.ServerBalancerImpl;
+import net.ethandankiw.server.ServerPoolImpl;
 import net.ethandankiw.utils.SocketUtils;
 
-public class ClientRequestBalancer {
+public class AggregationRequestBalancer {
 
 	// Get the logger for this class
-	private static final Logger logger = LoggerFactory.getLogger(ClientRequestBalancer.class);
+	private static final Logger logger = LoggerFactory.getLogger(AggregationRequestBalancer.class);
 
 	// Separate thread for managing server scaling
 	private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -27,7 +29,6 @@ public class ClientRequestBalancer {
 	private static final ExecutorService clientRequestPool = Executors.newFixedThreadPool(100);
 
 	private static ServerPoolImpl serverPool = new ServerPoolImpl(GlobalConstants.DEFAULT_BALANCED_SERVERS);
-	private static ServerBalancerImpl serverBalancer = new ServerBalancerImpl(serverPool);
 
 	// Store the server that is having its requests balanced
 	private static HttpServer listener;
@@ -52,7 +53,7 @@ public class ClientRequestBalancer {
 		}
 
 		// Create a new HTTP server
-		listener = new HttpServer(ClientRequestBalancer.class.getSimpleName(), serverPort);
+		listener = new HttpServer(AggregationRequestBalancer.class.getSimpleName(), serverPort);
 
 		// Initialise the server
 		listener.start();
@@ -67,7 +68,7 @@ public class ClientRequestBalancer {
 		}
 
 		// Create a new server scaler
-		serverBalancer = new ServerBalancerImpl(serverPool);
+		ServerBalancerImpl serverBalancer = new ServerBalancerImpl(serverPool);
 
 		// Delay first schedule hit
 		int initialDelay = 5; // seconds
@@ -78,7 +79,7 @@ public class ClientRequestBalancer {
 		// Start the server scaling thread
 		// Every 30s balance the number of active aggregation servers
 		scheduler.scheduleAtFixedRate(serverBalancer::balanceServers, initialDelay, delayPeriod, TimeUnit.SECONDS);
-		logger.info("Load Balancer Scheduler started with an initial delay of {} seconds and will run every {} seconds", initialDelay, delayPeriod);
+		logger.info("[{}] Balancer started with an initial delay of {} seconds and will run every {} seconds", listener.getName(), initialDelay, delayPeriod);
 
 		// Start balancing the incoming requests
 		startAcceptingRequests();

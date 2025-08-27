@@ -13,11 +13,12 @@ import net.ethandankiw.utils.JsonUtils;
 
 public class FileManager {
 
+	public static final Logger logger = LoggerFactory.getLogger(FileManager.class);
+
+
 	private FileManager() {
 	}
 
-
-	public static final Logger logger = LoggerFactory.getLogger(FileManager.class);
 
 	public static List<File> getListOfStoredFiles() {
 		// Get the file directory for the stored files
@@ -32,7 +33,8 @@ public class FileManager {
 		}
 
 		// Return the list of files
-		return Arrays.stream(files).toList();
+		return Arrays.stream(files)
+					 .toList();
 	}
 
 
@@ -52,6 +54,7 @@ public class FileManager {
 		// Get the file at the specified path
 		return new File(dir, path);
 	}
+
 
 	private static String getStorageDirectory() {
 		// Get the current working directory

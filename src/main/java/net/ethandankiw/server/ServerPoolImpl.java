@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.ethandankiw.GlobalConstants;
+import net.ethandankiw.aggregation.AggregationServer;
 import net.ethandankiw.data.ServerLoadComparator;
 
 public class ServerPoolImpl implements ServerPool {

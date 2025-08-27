@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.ethandankiw.GlobalConstants;
+import net.ethandankiw.aggregation.AggregationServer;
 
 public class ServerBalancerImpl implements ServerBalancer {
 
@@ -15,13 +16,11 @@ public class ServerBalancerImpl implements ServerBalancer {
 	// Store the server pool
 	private final ServerPool serverPool;
 
+
 	public ServerBalancerImpl(ServerPool serverPool) {
 		this.serverPool = serverPool;
 	}
 
-	void printServerStats() {
-
-	}
 
 	public void balanceServers() {
 		try {
@@ -70,7 +69,7 @@ public class ServerBalancerImpl implements ServerBalancer {
 	private void handleHighLoad() {
 		// If the current server count is already at maximum
 		if (Objects.equals(serverPool.getServerCount(), GlobalConstants.MAX_SERVERS)) {
-			logger.info("Unable to create new servers, already at maximum despite a HIGH average server load");
+			logger.info("Not creating a server, already at maximum count despite a HIGH average server load");
 			return;
 		}
 
@@ -82,7 +81,7 @@ public class ServerBalancerImpl implements ServerBalancer {
 	private void handleLowLoad() {
 		// If the current server count is already at minimum
 		if (Objects.equals(serverPool.getServerCount(), GlobalConstants.MIN_SERVERS)) {
-			logger.info("Unable to remove a server, already at minimum despite a LOW average server load");
+			logger.info("Not removing a server, already at minimum count despite a LOW average server load");
 			return;
 		}
 

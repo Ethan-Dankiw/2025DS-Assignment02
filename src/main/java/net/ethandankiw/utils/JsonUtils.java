@@ -15,11 +15,11 @@ import org.slf4j.LoggerFactory;
 
 public class JsonUtils {
 
+	public static final Logger logger = LoggerFactory.getLogger(JsonUtils.class);
+
+
 	private JsonUtils() {
 	}
-
-
-	public static final Logger logger = LoggerFactory.getLogger(JsonUtils.class);
 
 
 	public static String parseJSON(Map<String, String> json) {
@@ -52,6 +52,7 @@ public class JsonUtils {
 		// Build the string
 		return builder.toString();
 	}
+
 
 	public static Map<String, String> parseFile(File file) {
 

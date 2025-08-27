@@ -87,7 +87,8 @@ public class HttpRequest {
 		String requestStr = String.format("%n%n%s %s %s%n%n", this.method, this.path, this.version);
 
 		// Stream the header entries, format each one, and join them with a newline
-		String headerStr = this.headers.entrySet().stream()
+		String headerStr = this.headers.entrySet()
+									   .stream()
 									   .map(set -> String.format("%s: %s", set.getKey(), set.getValue()))
 									   .collect(Collectors.joining("\n"));
 

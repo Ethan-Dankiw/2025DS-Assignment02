@@ -1,10 +1,9 @@
-package net.ethandankiw.server;
+package net.ethandankiw.aggregation;
 
 import java.io.IOException;
 import java.net.Socket;
 import java.time.Duration;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -49,9 +48,11 @@ public class AggregationServer {
 		uuid = UuidUtils.generateUUID();
 	}
 
+
 	public String getUUID() {
 		return uuid;
 	}
+
 
 	// Get the current load of the server as a percentage
 	public Double getLoad() {
@@ -59,27 +60,32 @@ public class AggregationServer {
 		return (double) getActiveRequestsCount() / (double) GlobalConstants.MAX_THREADS_FOR_CLIENT_REQUESTS;
 	}
 
+
 	// Get the number of active requests
 	public Integer getActiveRequestsCount() {
 		// Get the number of active threads that are processing requests
 		return activeThreads.get();
 	}
 
+
 	// Stop accepting any new client connections
 	public void startDraining() {
 		acceptingNewRequests = false;
 	}
+
 
 	// Check if the server is accepting any new client requests
 	public boolean isDraining() {
 		return !acceptingNewRequests;
 	}
 
+
 	// Check if the server is at capacity
 	public boolean atCapacity() {
 		// If the server is at capacity
 		return getLoad() >= 1;
 	}
+
 
 	public void handleClientConnection(Socket client) {
 		// If the server is no longer accepting requests
@@ -118,22 +124,8 @@ public class AggregationServer {
 				return;
 			}
 
-			// Print that the request was parsed from the connection
-			//		logger.debug("Client request has been parsed");
-
 			// If request is valid
 			HttpRequest request = optionalRequest.get();
-
-			// Print that a new connection is being handled
-			//		logger.debug("Client request is being handled");
-
-			try {
-				// DEBUG: Sleep thread
-				Thread.sleep(Duration.ofSeconds(30));
-			} catch (InterruptedException ie) {
-				Thread.currentThread().interrupt(); // preserve interrupt
-				logger.warn("Thread sleep interrupted: {}", ie.getMessage());
-			}
 
 			// Handle the request from the client
 			// TODO: Send a response back to client
@@ -146,10 +138,12 @@ public class AggregationServer {
 		}
 	}
 
+
 	public void incrementActiveThreads() {
 		// Increment the number of active threads that are processing requests
 		activeThreads.incrementAndGet();
 	}
+
 
 	public void decrementActiveThreads() {
 		// Decrement the number of active threads that are processing requests
@@ -170,6 +164,7 @@ public class AggregationServer {
 		}
 	}
 
+
 	public void closeClientConnection(Socket client) {
 		try {
 			client.close();
@@ -178,6 +173,7 @@ public class AggregationServer {
 			logger.error("Unable to close client connection: {}", ioe.getMessage());
 		}
 	}
+
 
 	public void awaitFinishedProcessing() throws InterruptedException {
 		// Get the lock on the active threads variable
@@ -193,6 +189,7 @@ public class AggregationServer {
 			lock.unlock();
 		}
 	}
+
 
 	public void shutdown() {
 		// Start the shutdown process for the thread pool

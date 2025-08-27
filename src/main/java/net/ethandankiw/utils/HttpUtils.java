@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,7 +121,8 @@ public class HttpUtils {
 			while ((headerLine = fromClient.readLine()) != null && !headerLine.isBlank()) {
 				// Otherwise parse header fields
 				AbstractMap.SimpleEntry<String, String> header = parseSingleHeader(headerLine);
-				headers.put(header.getKey().toLowerCase(), header.getValue());
+				headers.put(header.getKey()
+								  .toLowerCase(), header.getValue());
 			}
 		} catch (Exception e) {
 			logger.error("Error reading headers: {}", e.getMessage());
