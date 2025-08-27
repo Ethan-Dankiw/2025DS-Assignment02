@@ -17,10 +17,10 @@ import net.ethandankiw.server.ServerBalancerImpl;
 import net.ethandankiw.server.ServerPoolImpl;
 import net.ethandankiw.utils.SocketUtils;
 
-public class AggregationRequestBalancer {
+public class LoadBalancer {
 
 	// Get the logger for this class
-	private static final Logger logger = LoggerFactory.getLogger(AggregationRequestBalancer.class);
+	private static final Logger logger = LoggerFactory.getLogger(LoadBalancer.class);
 
 	// Separate thread for managing server scaling
 	private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -53,7 +53,7 @@ public class AggregationRequestBalancer {
 		}
 
 		// Create a new HTTP server
-		listener = new HttpServer(AggregationRequestBalancer.class.getSimpleName(), serverPort);
+		listener = new HttpServer(LoadBalancer.class.getSimpleName(), serverPort);
 
 		// Initialise the server
 		listener.start();
