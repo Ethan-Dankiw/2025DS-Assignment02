@@ -2,9 +2,13 @@ package net.ethandankiw.server;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -20,13 +24,7 @@ public class AggregationServer {
 	private static final Logger logger = LoggerFactory.getLogger(AggregationServer.class);
 
 	// Define a pool of threads to handle client requests
-	ExecutorService pool = Executors.newFixedThreadPool(GlobalConstants.MAX_THREADS_FOR_CLIENT_REQUESTS);
-
-	// Current number of threads that are active
-	Integer activeThreads = 0;
-
-	// Flag for if the server is accepting new requests
-	boolean acceptingNewRequests = true;
+	private final ExecutorService pool = Executors.newFixedThreadPool(GlobalConstants.MAX_THREADS_FOR_CLIENT_REQUESTS);
 
 	// Create a lock on the number of active request processing threads
 	private final ReentrantLock lock = new ReentrantLock();
@@ -34,21 +32,27 @@ public class AggregationServer {
 	// Create a queue of threads waiting for the lock to be released
 	private final Condition drained = lock.newCondition();
 
+	// Current number of threads that are active
+	private final AtomicInteger activeThreads = new AtomicInteger(0);
+
+	// Flag for if the server is accepting new requests
+	private volatile boolean acceptingNewRequests = true;
+
 
 	// Public constructor
 	public AggregationServer() { /* Do nothing */ }
 
 
 	// Get the current load of the server as a percentage
-	Double getLoad() {
-		// Get the lock on the active thread variable
-		lock.lock();
-		try {
-			// Calculate the server load as a percentage out of 100
-			return (double) activeThreads / (double) GlobalConstants.MAX_THREADS_FOR_CLIENT_REQUESTS;
-		} finally {
-			lock.unlock();
-		}
+	public Double getLoad() {
+		// Calculate the server load as a percentage out of 100
+		return (double) getActiveRequestsCount() / (double) GlobalConstants.MAX_THREADS_FOR_CLIENT_REQUESTS;
+	}
+
+	// Get the number of active requests
+	public Integer getActiveRequestsCount() {
+		// Get the number of active threads that are processing requests
+		return activeThreads.get();
 	}
 
 	// Stop accepting any new client connections
@@ -61,83 +65,98 @@ public class AggregationServer {
 		return !acceptingNewRequests;
 	}
 
+	// Check if the server is at capacity
+	public boolean atCapacity() {
+		// If the server is at capacity
+		return getLoad() >= 1;
+	}
+
 	public void handleClientConnection(Socket client) {
 		// If the server is no longer accepting requests
 		if (isDraining()) {
 			return;
 		}
 
-		// Spawn a new thread from the pool to process the client request
-		logger.debug("Spawning new thread to handle connection");
-		pool.submit(() -> handleConnection(client));
-
 		// Increment the number of active request processing threads
 		incrementActiveThreads();
+
+		try {
+			// Spawn a new thread from the pool to process the client request
+			pool.submit(() -> {
+				try {
+					handleConnection(client);
+				} catch (Exception e) {
+					logger.error("Error occurred while handling client connection: {}", e.getMessage());
+				} finally {
+					decrementActiveThreads();
+				}
+			});
+		} catch (Exception e) {
+			logger.error("Error occurred while submitting task for execution: {}", e.getMessage());
+		}
 	}
 
 
 	private void handleConnection(Socket client) {
-		// Parse a possible request from the client
-		Optional<HttpRequest> optionalRequest = RequestUtils.parseClientRequest(client);
+		try {
+			// Parse a possible request from the client
+			Optional<HttpRequest> optionalRequest = RequestUtils.parseClientRequest(client);
 
-		// If the request was unable to be parsed
-		if (optionalRequest.isEmpty()) {
-			logger.error("Unable to parse client request");
+			// If the request was unable to be parsed
+			if (optionalRequest.isEmpty()) {
+				logger.error("Unable to parse client request");
+				return;
+			}
 
+			// Print that the request was parsed from the connection
+			//		logger.debug("Client request has been parsed");
+
+			// If request is valid
+			HttpRequest request = optionalRequest.get();
+
+			// Print that a new connection is being handled
+			//		logger.debug("Client request is being handled");
+
+			try {
+				// DEBUG: Sleep thread
+				Thread.sleep(Duration.ofSeconds(30));
+			} catch (InterruptedException ie) {
+				Thread.currentThread().interrupt(); // preserve interrupt
+				logger.warn("Thread sleep interrupted: {}", ie.getMessage());
+			}
+
+			// Handle the request from the client
+			// TODO: Send a response back to client
+			RequestUtils.handleClientRequest(request);
+		} catch (Exception e) {
+			logger.error("Error handling client request: {}", e.getMessage());
+		} finally {
 			// Safely close the client connection
 			closeClientConnection(client);
-			return;
 		}
-
-		// Print that the request was parsed from the connection
-		logger.debug("Client request has been parsed");
-
-		// If request is valid
-		HttpRequest request = optionalRequest.get();
-
-		// Print that a new connection is being handled
-		logger.debug("Client request is being handled");
-
-		// Handle the request from the client
-		// TODO: Send a response back to client
-		RequestUtils.handleClientRequest(request);
-
-		// Safely close the client connection
-		closeClientConnection(client);
-
-		// Decrement the number of active request processing threads
-		decrementActiveThreads();
 	}
 
 	public void incrementActiveThreads() {
-		// Get the lock on the active thread variable
-		lock.lock();
-
-		try {
-			// Increment the active thread count
-			activeThreads += 1;
-		} finally {
-			// Release the lock
-			lock.unlock();
-		}
+		// Increment the number of active threads that are processing requests
+		activeThreads.incrementAndGet();
 	}
 
 	public void decrementActiveThreads() {
-		// Get the lock on the active thread variable
-		lock.lock();
+		// Decrement the number of active threads that are processing requests
+		int count = activeThreads.decrementAndGet();
 
-		try {
-			// Decrement the active thread count
-			activeThreads -= 1;
+		// If done processing
+		if (count == 0) {
+			// Acquire the lock on the drained condition
+			lock.lock();
 
-			// If there are no more request threads
-			if (activeThreads == 0) {
-				// Notify waiting threads that the server is drained
+			try {
+				// Signal that the server is done processing
 				drained.signalAll();
+			} finally {
+				// Release the lock
+				lock.unlock();
 			}
-		} finally {
-			// Release the lock
-			lock.unlock();
 		}
 	}
 
@@ -156,7 +175,7 @@ public class AggregationServer {
 
 		try {
 			// While there are requests being processed
-			while (activeThreads > 0) {
+			while (getActiveRequestsCount() > 0) {
 				// Wait for there to be no more processed threads
 				drained.await();
 			}
@@ -166,8 +185,23 @@ public class AggregationServer {
 	}
 
 	public void shutdown() {
-		// Shutdown the thread pool
+		// Start the shutdown process for the thread pool
 		pool.shutdown();
-		logger.info("AggregationServer thread pool has shutdown successfully");
+
+		try {
+			// Wait for the pool to shut down
+			boolean success = pool.awaitTermination(5, TimeUnit.SECONDS);
+
+			// If the shutdown was not successful
+			if (!success) {
+				logger.warn("Timeout elapsed while shutting down thread pool");
+				return;
+			}
+
+			// If the shutdown was successful
+			logger.debug("Thread pool has shutdown successfully");
+		} catch (InterruptedException ie) {
+			logger.error("Error occurred while shutting down thread pool");
+		}
 	}
 }

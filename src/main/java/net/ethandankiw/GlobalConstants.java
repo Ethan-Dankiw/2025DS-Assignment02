@@ -15,6 +15,12 @@ public enum GlobalConstants {
 	// Maximum number of threads to handle incoming client requests
 	public static final Integer MAX_THREADS_FOR_CLIENT_REQUESTS = 100;
 
+	// Threshold for creating a new server when balancing
+	public static final Double SERVER_CREATION_THRESHOLD = 0.65;
+
+	// Threshold for removing a server when balancing
+	public static final Double SERVER_REMOVAL_THRESHOLD = 0.30;
+
 	// Default number of aggregation servers the load balancer starts with
 	public static final Integer DEFAULT_BALANCED_SERVERS = 3;
 

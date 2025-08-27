@@ -1,6 +1,8 @@
-package net.ethandankiw.server;
+package net.ethandankiw.data;
 
 import java.util.Comparator;
+
+import net.ethandankiw.server.AggregationServer;
 
 public class ServerLoadComparator implements Comparator<AggregationServer> {
 	@Override

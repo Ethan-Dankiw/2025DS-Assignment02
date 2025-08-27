@@ -2,19 +2,19 @@ package net.ethandankiw.server;
 
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.MissingResourceException;
 import java.util.Optional;
-import java.util.PriorityQueue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.ethandankiw.GlobalConstants;
 import net.ethandankiw.data.HttpServer;
+import net.ethandankiw.data.ServerLoadComparator;
 import net.ethandankiw.utils.SocketUtils;
 
 public class LoadBalancer {
@@ -23,16 +23,16 @@ public class LoadBalancer {
 	private static final Logger logger = LoggerFactory.getLogger(LoadBalancer.class);
 
 	// Create a priority queue where the lowest server load is first
-	private static final PriorityQueue<AggregationServer> servers = new PriorityQueue<>(new ServerLoadComparator());
-
-	// Create a lock on the queue of servers
-	private static final ReentrantLock lock = new ReentrantLock();
-
-	// Store the server that is having its requests balanced
-	private static HttpServer listener;
+	private static final PriorityBlockingQueue<AggregationServer> servers = new PriorityBlockingQueue<>(GlobalConstants.DEFAULT_BALANCED_SERVERS, new ServerLoadComparator());
 
 	// Separate thread for managing server scaling
 	private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+	// Create a thread pool for handling client connections
+	private static final ExecutorService clientRequestPool = Executors.newFixedThreadPool(100);
+
+	// Store the server that is having its requests balanced
+	private static HttpServer listener;
 
 
 	public static void main(String[] args) {
@@ -61,22 +61,19 @@ public class LoadBalancer {
 
 		// Create the default amount of aggregation servers
 		for (int i = 0; i < GlobalConstants.DEFAULT_BALANCED_SERVERS; i++) {
-			// Create an aggregation server
-			AggregationServer server = new AggregationServer();
-
-			// Put the server on the queue
-			servers.add(server);
+			// Add a new server to the queue
+			addNewServer();
 		}
 
 		// Delay first schedule hit
-		int initialDelay = 30; // seconds
+		int initialDelay = 5; // seconds
 
 		// Run scheduler every X seconds
 		int delayPeriod = 30; // seconds
 
 		// Start the server scaling thread
 		// Every 30s balance the number of active aggregation servers
-		scheduler.scheduleAtFixedRate(LoadBalancer::balanceServerCount, initialDelay, delayPeriod, TimeUnit.SECONDS);
+		scheduler.scheduleAtFixedRate(LoadBalancer::balanceServers, initialDelay, delayPeriod, TimeUnit.SECONDS);
 		logger.info("Load Balancer Scheduler started with an initial delay of {} seconds and will run every {} seconds", initialDelay, delayPeriod);
 
 		// Start balancing the incoming requests
@@ -108,67 +105,103 @@ public class LoadBalancer {
 			// Get the connection
 			Socket client = optionalConnection.get();
 
-			// Get the lock for the servers list
-			lock.lock();
-
-			// Get the server that has the least load
-			AggregationServer leastLoadedServer = servers.poll();
-
-			// If the server does not exist
-			if (leastLoadedServer == null) {
-				throw new MissingResourceException(
-						"No server to process the incoming request",
-						LoadBalancer.class.getSimpleName(),
-						AggregationServer.class.getSimpleName()
-				);
-			}
-
-			// If the server exists
-			// Add the server back and sort based on current load
-			servers.add(leastLoadedServer);
-
-			// Release the lock
-			lock.unlock();
-
-
-
-			// If the server exists
-			leastLoadedServer.handleClientConnection(client);
+			// Handle the client request on a separate thread
+			clientRequestPool.submit(() -> handleClient(client));
 		}
 	}
 
 
-	static void balanceServerCount() {
+	static void handleClient(Socket client) {
+		// Get the first server that is accepting requests with the least load
+		AggregationServer leastLoaded = getAvailableServer();
+
+		// If the server exists, handle the client's request
+		leastLoaded.handleClientConnection(client);
+	}
+
+
+	static AggregationServer getAvailableServer() {
+		// Get the least loaded server
+		AggregationServer server = getLeastLoadedServer();
+
+		// If the server does not exist
+		if (server == null) {
+			logger.debug("Creating new server as no servers currently exist");
+
+			// Create and add a new server to the list
+			return addNewServer();
+		}
+
+		// If the server does exist
+		// Check if the server is at capacity
+		if (server.atCapacity()) {
+			logger.debug("Creating new server as least loaded server is at capacity");
+
+			// Create and add a new server to the list
+			return addNewServer();
+		}
+
+		// Return the least loaded server that is not at capacity
+		return server;
+	}
+
+
+	static void printServerStats() {
+		logger.info("Checking server load...");
+
+		// Define a counter
+		// TODO: Create a UUID for each server
+		int counter = 1;
+
+		// Log the breakdown of server load for each server
+		for (AggregationServer server : servers) {
+			logger.info("Server {} has {} active requests out of {}", counter, server.getActiveRequestsCount(), GlobalConstants.MAX_THREADS_FOR_CLIENT_REQUESTS);
+			counter++;
+		}
+	}
+
+
+	static void balanceServers() {
 		try {
-			logger.info("Checking server load...");
+			// Print the stats for each server
+			printServerStats();
 
 			// Compute the average server load for every active server
 			double averageLoad = calculateAverageLoad();
 
-			logger.info("Average server load across {} servers: {}%", servers.size(), averageLoad);
+			// Log the average load for all servers
+			String loadPercentage = String.format("%.2f", averageLoad * 100);
+			logger.info("Average server load across {} servers: {}%", servers.size(), loadPercentage);
 
-			// If the average server load is getting high
-			if (averageLoad > 0.75) {
-				handleHighLoad();
-			}
-
-			// If the average server load is dropping too low
-			else if (averageLoad < 0.25) {
-				handleLowLoad();
-			}
-
+			// Handle the server balancing
+			handleServerBalance(averageLoad);
 		} catch (Exception e) {
 			logger.error("Error while balancing server count", e);
 		}
 	}
 
 
-	private static double calculateAverageLoad() {
-		// Calculate the average
-		return servers.stream()
-					  .mapToDouble(AggregationServer::getLoad)
-					  .average()
-					  .orElse(0.0);
+	static void handleServerBalance(Double serverLoad) {
+		// Define strings for the thresholds
+		String creationThreshold = String.format("%.2f", GlobalConstants.SERVER_CREATION_THRESHOLD * 100);
+		String removalThreshold = String.format("%.2f", GlobalConstants.SERVER_REMOVAL_THRESHOLD * 100);
+
+		// If the server load is getting high
+		if (serverLoad > GlobalConstants.SERVER_CREATION_THRESHOLD) {
+			logger.info("Creating a new server as load is above threshold: {}", creationThreshold);
+			handleHighLoad();
+		}
+
+		// If the server load is dropping too low
+		else if (serverLoad < GlobalConstants.SERVER_REMOVAL_THRESHOLD) {
+			logger.info("Removing a server as load is below threshold: {}", removalThreshold);
+			handleLowLoad();
+		}
+
+		// If the server load is within the defined range
+		else {
+			logger.info("Server load is within thresholds ({} - {}), no action taken", removalThreshold, creationThreshold);
+		}
 	}
 
 
@@ -179,9 +212,8 @@ public class LoadBalancer {
 			return;
 		}
 
-		AggregationServer newServer = new AggregationServer();
-		servers.add(newServer);
-		logger.info("Added new server, current active count = {}", servers.size());
+		// Add a new server to the queue
+		addNewServer();
 	}
 
 
@@ -192,8 +224,8 @@ public class LoadBalancer {
 			return;
 		}
 
-		// Get the least loaded server
-		AggregationServer leastLoaded = servers.poll();
+		// Remove the least loaded server
+		AggregationServer leastLoaded = removeLeastLoadedServer();
 
 		// If the least loaded server does not exist
 		if (leastLoaded == null) {
@@ -238,4 +270,59 @@ public class LoadBalancer {
 		}, "GracefulServerShutdownThread").start();
 	}
 
+
+	private static double calculateAverageLoad() {
+		// Calculate the average
+		return servers.stream()
+					  .mapToDouble(AggregationServer::getLoad)
+					  .average()
+					  .orElse(0.0);
+	}
+
+
+	static AggregationServer addNewServer() {
+		// Create a new server
+		AggregationServer server = new AggregationServer();
+
+		// Add the server to the queue
+		addServer(server);
+		logger.info("Added new server, current active count = {}", servers.size());
+
+		// Return the newly created server
+		return server;
+	}
+
+
+	static AggregationServer getLeastLoadedServer() {
+		// Get the server with the least load
+		AggregationServer server = removeLeastLoadedServer();
+
+		// Put the server back into the list of servers
+		addServer(server);
+
+		// Return the least loaded server
+		return server;
+	}
+
+	static AggregationServer removeLeastLoadedServer() {
+		// Get the server with the least load
+		return servers.poll();
+	}
+
+
+	static void addServer(AggregationServer server) {
+		// If the server does not exist
+		if (server == null) {
+			logger.info("Cannot add server to priority queue as the server is null");
+			return;
+		}
+
+		// Put the server back in the list of servers
+		boolean success = servers.offer(server);
+
+		// If the server was not put in the list
+		if (!success) {
+			logger.error("Failed to re-add server to the priority queue: {}", server);
+		}
+	}
 }
