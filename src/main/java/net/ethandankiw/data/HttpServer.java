@@ -26,7 +26,7 @@ public class HttpServer {
 		this.port = port;
 	}
 
-	public void init() {
+	public void start() {
 		logger.info("[{}] Server starting...", name);
 
 		// Attempt to create a server socket on the provided port
@@ -39,7 +39,7 @@ public class HttpServer {
 		}
 
 		// If the attempt was successful, log the success
-		logger.info("[{}] Started on port {}", name, port);
+		logger.info("[{}] Accepting requests on port {}", name, port);
 
 		// Store the socket on the http server
 		this.socket = serverSocket.get();
