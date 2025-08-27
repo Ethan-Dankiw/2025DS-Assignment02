@@ -18,10 +18,14 @@ import org.slf4j.LoggerFactory;
 import net.ethandankiw.GlobalConstants;
 import net.ethandankiw.data.HttpRequest;
 import net.ethandankiw.utils.RequestUtils;
+import net.ethandankiw.utils.UuidUtils;
 
 public class AggregationServer {
 
 	private static final Logger logger = LoggerFactory.getLogger(AggregationServer.class);
+
+	// Unique ID for the aggregation server
+	private final String uuid;
 
 	// Define a pool of threads to handle client requests
 	private final ExecutorService pool = Executors.newFixedThreadPool(GlobalConstants.MAX_THREADS_FOR_CLIENT_REQUESTS);
@@ -40,8 +44,14 @@ public class AggregationServer {
 
 
 	// Public constructor
-	public AggregationServer() { /* Do nothing */ }
+	public AggregationServer() {
+		// Generate a unique ID
+		uuid = UuidUtils.generateUUID();
+	}
 
+	public String getUUID() {
+		return uuid;
+	}
 
 	// Get the current load of the server as a percentage
 	public Double getLoad() {

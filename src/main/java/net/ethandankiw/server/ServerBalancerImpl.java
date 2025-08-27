@@ -123,7 +123,7 @@ public class ServerBalancerImpl implements ServerBalancer {
 				server.awaitFinishedProcessing();
 				// When the server has no active requests, shut it down
 				server.shutdown();
-				logger.info("Server shut down gracefully. Remaining = {}", serverPool.getServerCount());
+				logger.info("Server {} has shut down gracefully. Remaining = {}", server.getUUID(), serverPool.getServerCount());
 			} catch (InterruptedException e) {
 				Thread.currentThread()
 					  .interrupt();

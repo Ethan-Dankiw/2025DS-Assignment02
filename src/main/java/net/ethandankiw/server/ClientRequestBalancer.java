@@ -26,8 +26,8 @@ public class ClientRequestBalancer {
 	// Create a thread pool for handling client connections
 	private static final ExecutorService clientRequestPool = Executors.newFixedThreadPool(100);
 
-	// Store the pool of servers
-	static ServerPoolImpl serverPool;
+	private static ServerPoolImpl serverPool = new ServerPoolImpl(GlobalConstants.DEFAULT_BALANCED_SERVERS);
+	private static ServerBalancerImpl serverBalancer = new ServerBalancerImpl(serverPool);
 
 	// Store the server that is having its requests balanced
 	private static HttpServer listener;
@@ -67,7 +67,7 @@ public class ClientRequestBalancer {
 		}
 
 		// Create a new server scaler
-		ServerBalancerImpl balancer = new ServerBalancerImpl(serverPool);
+		serverBalancer = new ServerBalancerImpl(serverPool);
 
 		// Delay first schedule hit
 		int initialDelay = 5; // seconds
@@ -77,7 +77,7 @@ public class ClientRequestBalancer {
 
 		// Start the server scaling thread
 		// Every 30s balance the number of active aggregation servers
-		scheduler.scheduleAtFixedRate(balancer::balanceServers, initialDelay, delayPeriod, TimeUnit.SECONDS);
+		scheduler.scheduleAtFixedRate(serverBalancer::balanceServers, initialDelay, delayPeriod, TimeUnit.SECONDS);
 		logger.info("Load Balancer Scheduler started with an initial delay of {} seconds and will run every {} seconds", initialDelay, delayPeriod);
 
 		// Start balancing the incoming requests

@@ -71,7 +71,7 @@ public class ServerPoolImpl implements ServerPool {
 
 		// Add the server to the queue
 		register(server);
-		logger.info("Added new server, current active count = {}", servers.size());
+		logger.info("Added new server {}, current active count = {}", server.getUUID(), servers.size());
 
 		// Return the newly created server
 		return server;
@@ -186,14 +186,11 @@ public class ServerPoolImpl implements ServerPool {
 	 */
 	@Override
 	public void printStats() {
-		// Define a counter
-		// TODO: Create a UUID for each server
-		int counter = 1;
+		logger.info("Stats for the current servers");
 
 		// Log the breakdown of server load for each server
 		for (AggregationServer server : servers) {
-			logger.info("Server {} has {} active requests out of {}", counter, server.getActiveRequestsCount(), GlobalConstants.MAX_THREADS_FOR_CLIENT_REQUESTS);
-			counter++;
+			logger.info("Server {} has {} active requests out of {}", server.getUUID(), server.getActiveRequestsCount(), GlobalConstants.MAX_THREADS_FOR_CLIENT_REQUESTS);
 		}
 	}
 }
