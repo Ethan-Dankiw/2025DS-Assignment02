@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 public class HttpRequest {
 
-	private RequestMethod method;
+	private HttpRequestMethod method;
 	private String path;
 	private String version;
 
@@ -14,7 +14,7 @@ public class HttpRequest {
 
 
 	public HttpRequest() {
-		method = RequestMethod.NONE;
+		method = HttpRequestMethod.NONE;
 		path = null;
 		version = null;
 		headers = null;
@@ -24,19 +24,19 @@ public class HttpRequest {
 
 	public void parseAndSetMethod(String methodStr) {
 		try {
-			method = RequestMethod.valueOf(methodStr.toUpperCase());
+			method = HttpRequestMethod.valueOf(methodStr.toUpperCase());
 		} catch (IllegalArgumentException iae) {
-			method = RequestMethod.NONE;
+			method = HttpRequestMethod.NONE;
 		}
 	}
 
 
-	public RequestMethod getMethod() {
+	public HttpRequestMethod getMethod() {
 		return method;
 	}
 
 
-	public void setMethod(RequestMethod method) {
+	public void setMethod(HttpRequestMethod method) {
 		this.method = method;
 	}
 

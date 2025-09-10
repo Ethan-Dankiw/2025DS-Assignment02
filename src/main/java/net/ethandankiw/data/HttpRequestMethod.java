@@ -1,5 +1,5 @@
 package net.ethandankiw.data;
 
-public enum RequestMethod {
+public enum HttpRequestMethod {
 	NONE, GET, PUT
 }

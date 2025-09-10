@@ -2,7 +2,6 @@ package net.ethandankiw.aggregation;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

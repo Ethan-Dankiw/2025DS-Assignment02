@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.ethandankiw.GlobalConstants;
+import net.ethandankiw.server.BalancingScheduler;
 import net.ethandankiw.server.HttpServer;
 import net.ethandankiw.server.ServerBalancerImpl;
 import net.ethandankiw.server.ServerPoolImpl;
@@ -21,9 +22,6 @@ public class LoadBalancer {
 
 	// Get the logger for this class
 	private static final Logger logger = LoggerFactory.getLogger(LoadBalancer.class);
-
-	// Separate thread for managing server scaling
-	private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
 	// Create a thread pool for handling client connections
 	private static final ExecutorService clientRequestPool = Executors.newFixedThreadPool(100);
@@ -70,16 +68,11 @@ public class LoadBalancer {
 		// Create a new server scaler
 		ServerBalancerImpl serverBalancer = new ServerBalancerImpl(serverPool);
 
-		// Delay first schedule hit
-		int initialDelay = 5; // seconds
+		// Set the server balancer on the scheduler
+		BalancingScheduler.setBalancer(serverBalancer);
 
-		// Run scheduler every X seconds
-		int delayPeriod = 30; // seconds
-
-		// Start the server scaling thread
-		// Every 30s balance the number of active aggregation servers
-		scheduler.scheduleAtFixedRate(serverBalancer::balanceServers, initialDelay, delayPeriod, TimeUnit.SECONDS);
-		logger.info("[{}] Balancer started with an initial delay of {} seconds and will run every {} seconds", listener.getName(), initialDelay, delayPeriod);
+		// Start the balancing scheduler
+		BalancingScheduler.startBalancingScheduler();
 
 		// Start balancing the incoming requests
 		startAcceptingRequests();
