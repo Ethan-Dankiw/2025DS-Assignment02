@@ -9,9 +9,9 @@ import net.ethandankiw.GlobalConstants;
 public class HttpResponse {
 
 	private HttpStatusCode status;
-	private String version;
+	private final String version;
 
-	private Map<String, String> headers;
+	private final Map<String, String> headers;
 	private String body;
 
 
