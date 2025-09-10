@@ -1,7 +1,10 @@
-package net.ethandankiw.data;
+package net.ethandankiw.data.http;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import net.ethandankiw.GlobalConstants;
 
 public class HttpRequest {
 
@@ -15,10 +18,10 @@ public class HttpRequest {
 
 	public HttpRequest() {
 		method = HttpRequestMethod.NONE;
-		path = null;
-		version = null;
-		headers = null;
-		body = null;
+		path = "/";
+		version = GlobalConstants.HTTP_VERSION;
+		headers = new HashMap<>();
+		body = "";
 	}
 
 
@@ -71,6 +74,11 @@ public class HttpRequest {
 	}
 
 
+	public void addHeader(String key, String value) {
+		this.headers.put(key, value);
+	}
+
+
 	public String getBody() {
 		return body;
 	}
@@ -83,16 +91,26 @@ public class HttpRequest {
 
 	@Override
 	public String toString() {
-		// Correctly format the request line
-		String requestStr = String.format("%n%n%s %s %s%n%n", this.method, this.path, this.version);
+		// Request-Line: e.g., "PUT /weather.json HTTP/1.1"
+		StringBuilder requestBuilder = new StringBuilder();
+		requestBuilder.append(String.format("%s %s %s\r", this.method.toString(), this.path, this.version));
+		requestBuilder.append("\n");
 
-		// Stream the header entries, format each one, and join them with a newline
+
+		// Add headers from the map
 		String headerStr = this.headers.entrySet()
 									   .stream()
 									   .map(set -> String.format("%s: %s", set.getKey(), set.getValue()))
-									   .collect(Collectors.joining("\n"));
+									   .collect(Collectors.joining("\r\n"));
+		requestBuilder.append(headerStr);
+		requestBuilder.append("\r\n"); // Blank line to separate headers from body
 
-		// Add a final newline for a clean break
-		return requestStr + headerStr + "\n\n" + body + "\n";
+		// Add the message body
+		if (this.body != null && !this.body.isEmpty()) {
+			requestBuilder.append("\r\n"); // Blank line to separate headers from body
+			requestBuilder.append(this.body);
+		}
+
+		return requestBuilder.toString();
 	}
 }

@@ -1,4 +1,4 @@
-package net.ethandankiw.server;
+package net.ethandankiw.data.server;
 
 import java.util.concurrent.PriorityBlockingQueue;
 
@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 
 import net.ethandankiw.GlobalConstants;
 import net.ethandankiw.aggregation.AggregationServer;
-import net.ethandankiw.data.ServerLoadComparator;
 
 public class ServerPoolImpl implements ServerPool {
 

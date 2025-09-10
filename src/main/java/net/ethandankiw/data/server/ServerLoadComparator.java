@@ -1,4 +1,4 @@
-package net.ethandankiw.data;
+package net.ethandankiw.data.server;
 
 import java.util.Comparator;
 

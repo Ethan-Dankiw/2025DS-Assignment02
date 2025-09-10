@@ -69,6 +69,9 @@ public class BalancingScheduler {
 			logger.info("Existing load balancer task cancelled. Rescheduling...");
 		}
 
+		// Subsequent restarts should use the full delay period to avoid rapid scheduling
+		initialDelay = delayPeriod;
+
 		balancingTask = scheduler.scheduleAtFixedRate(balancer::balanceServers, initialDelay, delayPeriod, timeUnit);
 		logger.info("Load Balancer successfully restarted. Now running every {}s", delayPeriod);
 	}

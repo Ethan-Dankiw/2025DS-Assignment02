@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import net.ethandankiw.GlobalConstants;
 import net.ethandankiw.aggregation.AggregationServer;
+import net.ethandankiw.data.server.ServerPool;
 
 public class ServerBalancerImpl implements ServerBalancer {
 
@@ -15,6 +16,14 @@ public class ServerBalancerImpl implements ServerBalancer {
 
 	// Store the server pool
 	private final ServerPool serverPool;
+
+	// Count the number of time the balancer has detected high server load
+	private final Integer HIGH_LOAD_COUNT_THRESHOLD = 5;
+	private Integer highLoadCount = 0;
+
+	// Count the number of time the balancer has detected low server load
+	private final Integer LOW_LOAD_COUNT_THRESHOLD = 3;
+	private Integer lowLoadCount = 0;
 
 
 	public ServerBalancerImpl(ServerPool serverPool) {
@@ -49,14 +58,66 @@ public class ServerBalancerImpl implements ServerBalancer {
 
 		// If the server load is getting high
 		if (serverLoad > GlobalConstants.SERVER_CREATION_THRESHOLD) {
-			logger.info("Creating a new server as load is above threshold: {}", creationThreshold);
+			logger.info("Attempting to create a new server as load is above threshold: {}%", creationThreshold);
 			handleHighLoad();
+
+			// Count the high load detected
+			highLoadCount += 1;
+			lowLoadCount = 0;
+
+			// Check if the high count has reached its threshold
+			if (highLoadCount >= HIGH_LOAD_COUNT_THRESHOLD) {
+				// Calculate the load factor
+				int loadFactor = highLoadCount - HIGH_LOAD_COUNT_THRESHOLD + 1;
+
+				// Calculate the new scheduling delay
+				int period = BalancingScheduler.getDelayPeriod();
+				int updatedPeriod = period * (int) Math.pow(loadFactor, 0.9);
+
+				// Ensure the new delay does not fall below a threshold
+				updatedPeriod = Math.clamp(updatedPeriod, 5, 180);
+
+				// If the updated period is the same as the old one
+				logger.debug("{} high loads were detected in a row", highLoadCount);
+				if (period != updatedPeriod) {
+					logger.debug("Attempting to change scheduling period from {}s to {}s", period, updatedPeriod);
+				}
+
+				// Update the delay and restart the scheduler
+				BalancingScheduler.setDelayPeriod(updatedPeriod);
+			}
 		}
 
 		// If the server load is dropping too low
 		else if (serverLoad < GlobalConstants.SERVER_REMOVAL_THRESHOLD) {
-			logger.info("Removing a server as load is below threshold: {}", removalThreshold);
+			logger.info("Attempting to remove a server as load is below threshold: {}%", removalThreshold);
 			handleLowLoad();
+
+			// Count the low load detected
+			lowLoadCount += 1;
+			highLoadCount = 0;
+
+			// Check if the low count has reached its threshold
+			if (lowLoadCount >= LOW_LOAD_COUNT_THRESHOLD) {
+				// Calculate the load factor
+				int loadFactor = lowLoadCount - LOW_LOAD_COUNT_THRESHOLD + 1;
+
+				// Calculate the new scheduling delay
+				int period = BalancingScheduler.getDelayPeriod();
+				int updatedPeriod = period * (int) Math.pow(loadFactor, 1.1);
+
+				// Ensure the new delay does not fall below a threshold
+				updatedPeriod = Math.clamp(updatedPeriod, 5, 180);
+
+				// If the updated period is the same as the old one
+				logger.debug("{} low loads were detected in a row", lowLoadCount);
+				if (period != updatedPeriod) {
+					logger.debug("Attempting to change scheduling period from {}s to {}s", period, updatedPeriod);
+				}
+
+				// Update the delay and restart the scheduler
+				BalancingScheduler.setDelayPeriod(updatedPeriod);
+			}
 		}
 
 		// If the server load is within the defined range

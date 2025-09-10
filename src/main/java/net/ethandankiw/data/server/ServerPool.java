@@ -1,4 +1,4 @@
-package net.ethandankiw.server;
+package net.ethandankiw.data.server;
 
 import net.ethandankiw.aggregation.AggregationServer;
 

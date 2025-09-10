@@ -1,7 +1,10 @@
-package net.ethandankiw.utils;
+package net.ethandankiw.utils.http;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.Socket;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.List;
@@ -11,23 +14,43 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.ethandankiw.data.HttpRequest;
+import net.ethandankiw.data.http.HttpRequest;
 
-public class HttpUtils {
+public class HttpRequestUtils {
 
-	public static final Logger logger = LoggerFactory.getLogger(HttpUtils.class);
+	private static final Logger logger = LoggerFactory.getLogger(HttpRequestUtils.class);
 
 
-	private HttpUtils() {
+	private HttpRequestUtils() {
 	}
 
 
-	public static Optional<HttpRequest> parseRequest(BufferedReader fromClient) {
+	/**
+	 * Parse a client request
+	 */
+	public static Optional<HttpRequest> parseClientRequest(Socket client) {
+		// Print the lines from the request then close the client socket
+		try {
+			InputStream stream = client.getInputStream();
+			// Get the communication stream being sent from the client
+			BufferedReader fromClient = new BufferedReader(new InputStreamReader(stream));
+
+			// Parse the request from the client
+			return parseRequest(fromClient);
+		} catch (IOException ioe) {
+			logger.warn("Unable to get input stream for client: {}", ioe.getMessage());
+		}
+
+		// Default to no parsed HTTP request
+		return Optional.empty();
+	}
+
+	private static Optional<HttpRequest> parseRequest(BufferedReader fromClient) {
 		// Create the data structure for a http request
 		HttpRequest request = new HttpRequest();
 
 		// Get the request from the client
-		List<String> requestLine = HttpUtils.parseRequestLine(fromClient);
+		List<String> requestLine = HttpRequestUtils.parseRequestLine(fromClient);
 
 		// If there is a valid request line
 		if (requestLine.isEmpty()) {
@@ -41,7 +64,7 @@ public class HttpUtils {
 		request.setVersion(requestLine.get(2));
 
 		// Get the header lines from the client
-		Map<String, String> headers = HttpUtils.parseHeaders(fromClient);
+		Map<String, String> headers = HttpRequestUtils.parseHeaders(fromClient);
 
 		// If there are no headers
 		if (headers.isEmpty()) {
@@ -66,7 +89,7 @@ public class HttpUtils {
 			int contentLength = Integer.parseInt(contentLengthStr);
 
 			// Parse the body from the client using the content length
-			String body = HttpUtils.parseBody(fromClient, contentLength);
+			String body = HttpRequestUtils.parseBody(fromClient, contentLength);
 
 			// Store the body on the request
 			request.setBody(body);

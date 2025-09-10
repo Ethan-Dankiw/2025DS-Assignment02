@@ -2,6 +2,7 @@ package net.ethandankiw.aggregation;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,9 +15,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.ethandankiw.GlobalConstants;
-import net.ethandankiw.data.HttpRequest;
-import net.ethandankiw.utils.RequestUtils;
+import net.ethandankiw.data.http.HttpRequest;
+import net.ethandankiw.data.http.HttpRequestMethod;
+import net.ethandankiw.data.http.HttpStatusCode;
+import net.ethandankiw.data.http.JSON;
+import net.ethandankiw.data.store.ContentStore;
+import net.ethandankiw.data.store.FileManager;
+import net.ethandankiw.utils.JsonUtils;
 import net.ethandankiw.utils.UuidUtils;
+import net.ethandankiw.utils.http.HttpRequestUtils;
+import net.ethandankiw.utils.http.HttpResponseUtils;
 
 public class AggregationServer {
 
@@ -108,6 +116,7 @@ public class AggregationServer {
 			});
 		} catch (Exception e) {
 			logger.error("Error occurred while submitting task for execution: {}", e.getMessage());
+
 		}
 	}
 
@@ -115,26 +124,104 @@ public class AggregationServer {
 	private void handleConnection(Socket client) {
 		try {
 			// Parse a possible request from the client
-			Optional<HttpRequest> optionalRequest = RequestUtils.parseClientRequest(client);
+			Optional<HttpRequest> optionalRequest = HttpRequestUtils.parseClientRequest(client);
 
 			// If the request was unable to be parsed
 			if (optionalRequest.isEmpty()) {
 				logger.error("Unable to parse client request");
+				String responseBody = "Unable to parse client request";
+				HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.BAD_REQUEST, responseBody);
 				return;
 			}
 
 			// If request is valid
 			HttpRequest request = optionalRequest.get();
 
-			// Handle the request from the client
-			// TODO: Send a response back to client
-			RequestUtils.handleClientRequest(request);
+			// Get the request method
+			HttpRequestMethod method = request.getMethod();
+
+			// Handle the request according to the method
+			switch (method) {
+				case GET -> {
+					logger.debug("Detected GET request");
+					handleGETRequest(client);
+				}
+				case PUT -> {
+					logger.debug("Detected PUT request");
+					handlePUTRequest(client, request);
+				}
+				case null, default -> {
+					logger.error("Invalid request method: {}", method);
+					String responseBody = "Invalid request method";
+					HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.BAD_REQUEST, responseBody);
+				}
+			}
 		} catch (Exception e) {
 			logger.error("Error handling client request: {}", e.getMessage());
+			String responseBody = "Error handling client request";
+			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.INTERNAL_SERVER_ERROR, responseBody);
 		} finally {
 			// Safely close the client connection
 			closeClientConnection(client);
 		}
+	}
+
+
+	private void handlePUTRequest(Socket client, HttpRequest request) {
+		// Get the request body
+		String body = request.getBody();
+
+		// Check for no content
+		if (body == null || body.trim()
+								.isEmpty()) {
+			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.NO_CONTENT, "No content provided in PUT request.");
+			return;
+		}
+
+		// Parse the request body to JSON
+		JSON json = JsonUtils.parseStringToJSON(body);
+
+		// Check if the JSON is valid and contains an ID
+		if (!json.containsKey("id")) {
+			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.BAD_REQUEST, "Invalid JSON data or missing 'id' key.");
+			return;
+		}
+
+		String id = json.getValue("id");
+
+		// Store the JSON object in the content store
+		JSON oldData = ContentStore.put(id, json);
+
+		// Persist the updated content store
+		FileManager.saveContentStore();
+
+		if (oldData == null) {
+			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.CREATED,
+					"Content for ID " + id + " created.");
+		} else {
+			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.OK, "Content for ID " + id + " updated.");
+		}
+	}
+
+
+	private void handleGETRequest(Socket client) {
+		// Get all data from the content store
+		Map<String, JSON> allData = ContentStore.getAll();
+
+		// Check if there is no content to return
+		if (allData.isEmpty()) {
+			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.NO_CONTENT, "No weather data available.");
+			return;
+		}
+
+		// Create a single JSON object to hold the aggregated data
+		JSON aggregatedJSON = new JSON();
+		allData.forEach((id, json) -> aggregatedJSON.add(id, JsonUtils.parseJSONToString(json)));
+
+		// Convert the aggregated JSON to a string
+		String responseBody = JsonUtils.parseJSONToString(aggregatedJSON);
+
+		HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.OK, responseBody);
 	}
 
 
@@ -166,6 +253,7 @@ public class AggregationServer {
 
 	public void closeClientConnection(Socket client) {
 		try {
+			logger.info("Closing client connection socket");
 			client.close();
 			logger.info("Client connection closed");
 		} catch (IOException ioe) {

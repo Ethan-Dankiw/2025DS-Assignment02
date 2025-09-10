@@ -5,17 +5,16 @@ import java.net.Socket;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.ethandankiw.GlobalConstants;
+import net.ethandankiw.data.store.ContentStore;
 import net.ethandankiw.server.BalancingScheduler;
 import net.ethandankiw.server.HttpServer;
 import net.ethandankiw.server.ServerBalancerImpl;
-import net.ethandankiw.server.ServerPoolImpl;
+import net.ethandankiw.data.server.ServerPoolImpl;
 import net.ethandankiw.utils.SocketUtils;
 
 public class LoadBalancer {
@@ -73,6 +72,12 @@ public class LoadBalancer {
 
 		// Start the balancing scheduler
 		BalancingScheduler.startBalancingScheduler();
+
+		// Load the content store from disk
+		ContentStore.loadFromDisk();
+
+		// Start the Content Store expiry task
+		ContentStore.startExpiryTask();
 
 		// Start balancing the incoming requests
 		startAcceptingRequests();

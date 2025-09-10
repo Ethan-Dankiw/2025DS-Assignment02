@@ -29,4 +29,7 @@ public enum GlobalConstants {
 
 	// Minimum allowed server when balancing
 	public static final Integer MIN_SERVERS = 1;
+
+	// Version of HTTP used for requests
+	public static final String HTTP_VERSION = "HTTP/1.1";
 }
