@@ -4,7 +4,7 @@ import net.ethandankiw.data.http.JSON;
 
 public class WeatherData {
 	private final JSON json;
-	private long lastUpdated;
+	private final long lastUpdated;
 
 	public WeatherData(JSON json) {
 		this.json = json;
@@ -19,10 +19,5 @@ public class WeatherData {
 
 	public long getLastUpdated() {
 		return lastUpdated;
-	}
-
-
-	public void setLastUpdated(long lastUpdated) {
-		this.lastUpdated = lastUpdated;
 	}
 }

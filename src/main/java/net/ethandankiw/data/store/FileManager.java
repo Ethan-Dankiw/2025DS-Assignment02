@@ -21,6 +21,7 @@ public class FileManager {
 	// Path to where files are stored
 	private static final String WEATHER_DATA_DIR = "src/main/java/net/ethandankiw/data/store/files/weatherdata";
 	private static final String CONTENT_STORE_DIR = "src/main/java/net/ethandankiw/data/store/files/contentstore";
+	private static final String CONTENT_STORE_DATA_EXTENSION = ".json";
 
 
 	private FileManager() {
@@ -40,7 +41,7 @@ public class FileManager {
 
 		Map<String, JSON> allData = ContentStore.getAll();
 		allData.forEach((id, json) -> {
-			File file = new File(dir, id + ".json");
+			File file = new File(dir, id + CONTENT_STORE_DATA_EXTENSION);
 			try (FileWriter writer = new FileWriter(file)) {
 				writer.write(JsonUtils.parseJSONToString(json));
 				logger.info("Saved weather data for ID {} to file.", id);
@@ -57,7 +58,7 @@ public class FileManager {
 	 * @param id The ID of the weather station whose data file should be deleted.
 	 */
 	public static void deleteContentFile(String id) {
-		File file = new File(CONTENT_STORE_DIR, id + ".json");
+		File file = new File(CONTENT_STORE_DIR, id + CONTENT_STORE_DATA_EXTENSION);
 		if (file.exists()) {
 			if (file.delete()) {
 				logger.info("Deleted expired weather data file for ID: {}", id);
@@ -79,7 +80,7 @@ public class FileManager {
 			return;
 		}
 
-		File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
+		File[] files = dir.listFiles((d, name) -> name.endsWith(CONTENT_STORE_DATA_EXTENSION));
 		if (files == null) return;
 
 		Arrays.stream(files).forEach(file -> {

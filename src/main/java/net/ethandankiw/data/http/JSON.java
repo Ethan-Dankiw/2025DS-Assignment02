@@ -10,10 +10,6 @@ public class JSON {
 		this.data = new HashMap<>();
 	}
 
-	public JSON(Map<String, String> data) {
-		this.data = data;
-	}
-
 	public Map<String, String> get() {
 		return this.data;
 	}

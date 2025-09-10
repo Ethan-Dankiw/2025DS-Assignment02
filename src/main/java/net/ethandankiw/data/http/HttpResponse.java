@@ -38,18 +38,8 @@ public class HttpResponse {
 	}
 
 
-	public void setVersion(String version) {
-		this.version = version;
-	}
-
-
 	public Map<String, String> getHeaders() {
 		return headers;
-	}
-
-
-	public void setHeaders(Map<String, String> headers) {
-		this.headers = headers;
 	}
 
 
@@ -71,10 +61,10 @@ public class HttpResponse {
 	@Override
 	public String toString() {
 		// Status Line: e.g., "HTTP/1.1 200 OK"
-		String statusLine = String.format("%s %d %s", this.version, this.status.getStatusCode(), this.status.getReasonPhrase());
+		String statusLine = String.format("%s %d %s", getVersion(), getStatus().getStatusCode(), getStatus().getReasonPhrase());
 
 		// Header lines: e.g., "Content-Type: application/json"
-		String headerStr = this.headers.entrySet()
+		String headerStr = getHeaders().entrySet()
 									   .stream()
 									   .map(set -> String.format("%s: %s", set.getKey(), set.getValue()))
 									   .collect(Collectors.joining("\r\n")); // Use \r\n for line endings
@@ -86,8 +76,8 @@ public class HttpResponse {
 					   .append("\r\n");
 		responseBuilder.append("\r\n"); // Blank line to separate headers from body
 
-		if (body != null) {
-			responseBuilder.append(body);
+		if (getBody() != null) {
+			responseBuilder.append(getBody());
 		}
 
 		return responseBuilder.toString();

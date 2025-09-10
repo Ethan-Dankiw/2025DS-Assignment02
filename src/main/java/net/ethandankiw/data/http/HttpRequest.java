@@ -93,12 +93,12 @@ public class HttpRequest {
 	public String toString() {
 		// Request-Line: e.g., "PUT /weather.json HTTP/1.1"
 		StringBuilder requestBuilder = new StringBuilder();
-		requestBuilder.append(String.format("%s %s %s\r", this.method.toString(), this.path, this.version));
+		requestBuilder.append(String.format("%s %s %s\r", getMethod().toString(), getPath(), getVersion()));
 		requestBuilder.append("\n");
 
 
 		// Add headers from the map
-		String headerStr = this.headers.entrySet()
+		String headerStr = getHeaders().entrySet()
 									   .stream()
 									   .map(set -> String.format("%s: %s", set.getKey(), set.getValue()))
 									   .collect(Collectors.joining("\r\n"));
@@ -106,9 +106,9 @@ public class HttpRequest {
 		requestBuilder.append("\r\n"); // Blank line to separate headers from body
 
 		// Add the message body
-		if (this.body != null && !this.body.isEmpty()) {
+		if (getBody() != null && !getBody().isEmpty()) {
 			requestBuilder.append("\r\n"); // Blank line to separate headers from body
-			requestBuilder.append(this.body);
+			requestBuilder.append(getBody());
 		}
 
 		return requestBuilder.toString();
