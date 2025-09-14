@@ -36,10 +36,12 @@ public class JsonUtils {
 		try (Formatter formatter = new Formatter(builder, Locale.US)) {
 			// Counters for entry count
 			int current = 0;
-			int total = json.get().size();
+			int total = json.get()
+							.size();
 
 			// For each of the key-value pairs
-			for (Map.Entry<String, String> entry : json.get().entrySet()) {
+			for (Map.Entry<String, String> entry : json.get()
+													   .entrySet()) {
 				formatter.format("\"%s\": \"%s\"", entry.getKey(), entry.getValue());
 				// If it's not the last entry, add a comma
 				if (++current < total) {
@@ -57,9 +59,10 @@ public class JsonUtils {
 		return builder.toString();
 	}
 
+
 	/**
-	 * Reads a file that contains a single JSON object and parses it into a JSON object.
-	 * This method is designed for files that are themselves valid JSON.
+	 * Reads a file that contains a single JSON object and parses it into a JSON object. This method is designed for
+	 * files that are themselves valid JSON.
 	 *
 	 * @param file The file containing the JSON string.
 	 * @return A JSON object with the parsed key-value pairs, or an empty JSON object if parsing fails.
@@ -135,7 +138,8 @@ public class JsonUtils {
 				String[] keyValueStr = str.split(":", 2);
 
 				// Get the key value pair
-				String key = keyValueStr[0].trim().toLowerCase();
+				String key = keyValueStr[0].trim()
+										   .toLowerCase();
 				String value = keyValueStr[1].trim();
 
 				// Put the key value on the JSON object

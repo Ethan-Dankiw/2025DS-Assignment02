@@ -96,7 +96,6 @@ public class HttpRequest {
 		requestBuilder.append(String.format("%s %s %s\r", getMethod().toString(), getPath(), getVersion()));
 		requestBuilder.append("\n");
 
-
 		// Add headers from the map
 		String headerStr = getHeaders().entrySet()
 									   .stream()

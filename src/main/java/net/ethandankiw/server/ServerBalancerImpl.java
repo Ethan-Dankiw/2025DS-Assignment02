@@ -19,10 +19,9 @@ public class ServerBalancerImpl implements ServerBalancer {
 
 	// Count the number of time the balancer has detected high server load
 	private final Integer HIGH_LOAD_COUNT_THRESHOLD = 5;
-	private Integer highLoadCount = 0;
-
 	// Count the number of time the balancer has detected low server load
 	private final Integer LOW_LOAD_COUNT_THRESHOLD = 3;
+	private Integer highLoadCount = 0;
 	private Integer lowLoadCount = 0;
 
 

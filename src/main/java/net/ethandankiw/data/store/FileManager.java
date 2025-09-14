@@ -70,8 +70,8 @@ public class FileManager {
 
 
 	/**
-	 * Loads all JSON files from the storage directory and populates the ContentStore.
-	 * This is used for server recovery after a crash.
+	 * Loads all JSON files from the storage directory and populates the ContentStore. This is used for server recovery
+	 * after a crash.
 	 */
 	public static void loadContentStore() {
 		File dir = new File(CONTENT_STORE_DIR);
@@ -81,25 +81,27 @@ public class FileManager {
 		}
 
 		File[] files = dir.listFiles((d, name) -> name.endsWith(CONTENT_STORE_DATA_EXTENSION));
-		if (files == null) return;
+		if (files == null)
+			return;
 
-		Arrays.stream(files).forEach(file -> {
-			try {
-				// Attempt to parse the file
-				JSON json = JsonUtils.parseJsonFileToJson(file);
+		Arrays.stream(files)
+			  .forEach(file -> {
+				  try {
+					  // Attempt to parse the file
+					  JSON json = JsonUtils.parseJsonFileToJson(file);
 
-				// Check if the JSON is valid and contains an ID
-				if (json.containsKey("id")) {
-					// Put the data into the ContentStore
-					ContentStore.put(json.getValue("id"), json);
-					logger.info("Loaded weather data for ID {} from file.", json.getValue("id"));
-				} else {
-					logger.warn("Skipping file '{}' due to invalid JSON or missing 'id'.", file.getName());
-				}
-			} catch (Exception e) {
-				logger.warn("Skipping file '{}' due to a parsing error: {}", file.getName(), e.getMessage());
-			}
-		});
+					  // Check if the JSON is valid and contains an ID
+					  if (json.containsKey("id")) {
+						  // Put the data into the ContentStore
+						  ContentStore.put(json.getValue("id"), json);
+						  logger.info("Loaded weather data for ID {} from file.", json.getValue("id"));
+					  } else {
+						  logger.warn("Skipping file '{}' due to invalid JSON or missing 'id'.", file.getName());
+					  }
+				  } catch (Exception e) {
+					  logger.warn("Skipping file '{}' due to a parsing error: {}", file.getName(), e.getMessage());
+				  }
+			  });
 	}
 
 

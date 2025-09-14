@@ -8,10 +8,9 @@ import net.ethandankiw.GlobalConstants;
 
 public class HttpResponse {
 
-	private HttpStatusCode status;
 	private final String version;
-
 	private final Map<String, String> headers;
+	private HttpStatusCode status;
 	private String body;
 
 

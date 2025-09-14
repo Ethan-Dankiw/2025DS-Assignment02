@@ -14,6 +14,7 @@ import net.ethandankiw.data.WeatherData;
 import net.ethandankiw.data.http.JSON;
 
 public class ContentStore {
+
 	private static final Logger logger = LoggerFactory.getLogger(ContentStore.class);
 
 	// Using a ConcurrentHashMap for thread-safe access
@@ -24,7 +25,10 @@ public class ContentStore {
 	// Use a scheduled executor service for the expiration task
 	private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
-	private ContentStore() {}
+
+	private ContentStore() {
+	}
+
 
 	/**
 	 * Puts or updates weather data for a specific station ID.
@@ -42,6 +46,7 @@ public class ContentStore {
 		return null;
 	}
 
+
 	/**
 	 * Gets the JSON data for a specific station ID.
 	 *
@@ -52,6 +57,7 @@ public class ContentStore {
 		WeatherData weatherData = data.get(id);
 		return weatherData != null ? weatherData.getJson() : null;
 	}
+
 
 	/**
 	 * Gets a copy of all weather data.
@@ -64,6 +70,7 @@ public class ContentStore {
 		return allData;
 	}
 
+
 	/**
 	 * Starts a background task to remove expired content.
 	 */
@@ -72,14 +79,16 @@ public class ContentStore {
 		logger.info("Content store expiry task started. Will run every 10 seconds.");
 	}
 
+
 	/**
-	 * Loads the content store from the persistence layer (disk).
-	 * This method is designed to be called once on server startup.
+	 * Loads the content store from the persistence layer (disk). This method is designed to be called once on server
+	 * startup.
 	 */
 	public static void loadFromDisk() {
 		FileManager.loadContentStore();
 		logger.info("Content store initialized from disk.");
 	}
+
 
 	/**
 	 * A private method to check for and remove expired content.
@@ -94,6 +103,7 @@ public class ContentStore {
 			}
 		});
 	}
+
 
 	/**
 	 * Shuts down the expiry task scheduler.

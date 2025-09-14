@@ -6,29 +6,35 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.ethandankiw.GlobalConstants;
 import net.ethandankiw.data.http.HttpResponse;
 import net.ethandankiw.data.http.HttpStatusCode;
 import net.ethandankiw.utils.SocketUtils;
 
 public class HttpResponseUtils {
+
 	private static final Logger logger = LoggerFactory.getLogger(HttpResponseUtils.class);
 
-	private HttpResponseUtils() {}
 
-	public static void generateAndSendResponse(Socket client, HttpStatusCode status, @NotNull String body) {
+	private HttpResponseUtils() {
+	}
+
+
+	public static void generateAndSendResponse(Socket client, HttpStatusCode status, @NotNull String body, long clockValue) {
 		// Generate a response
-		HttpResponse response = HttpResponseUtils.generateResponse(status, body);
+		HttpResponse response = HttpResponseUtils.generateResponse(status, body, clockValue);
 
 		// Send the complete response to the client
 		boolean success = SocketUtils.writeToSocket(client, response.toString());
 
 		// If the response cannot be written to the client
 		if (!success) {
-			logger.debug("Unable to send response to client");
+			logger.error("Unable to send response to client");
 		}
 	}
 
-	public static HttpResponse generateResponse(HttpStatusCode status, @NotNull String body) {
+
+	public static HttpResponse generateResponse(HttpStatusCode status, @NotNull String body, long clockValue) {
 		// If there is no status
 		if (status == null || status.equals(HttpStatusCode.NONE)) {
 			status = HttpStatusCode.BAD_REQUEST;
@@ -42,6 +48,9 @@ public class HttpResponseUtils {
 
 		// Get the status code and reason phrase
 		Integer code = status.getStatusCode();
+
+		// Add the lamport clock to the response
+		response.addHeader(GlobalConstants.LAMPORT_CLOCK_HEADER, String.valueOf(clockValue));
 
 		// If the response is successful
 		if (code >= 200 && code < 300) {

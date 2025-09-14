@@ -74,7 +74,7 @@ public class ContentServer {
 
 			// Make the request by writing to the client -> server socket
 			boolean success = SocketUtils.writeToSocket(serverConnection, request.toString());
-			
+
 			// If the request was not successful
 			if (!success) {
 				logger.error("Request to {} was unsuccessful", serverConnection.getInetAddress());

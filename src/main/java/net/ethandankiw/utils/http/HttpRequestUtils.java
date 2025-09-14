@@ -45,6 +45,7 @@ public class HttpRequestUtils {
 		return Optional.empty();
 	}
 
+
 	private static Optional<HttpRequest> parseRequest(BufferedReader fromClient) {
 		// Create the data structure for a http request
 		HttpRequest request = new HttpRequest();

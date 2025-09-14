@@ -13,28 +13,25 @@ public class BalancingScheduler {
 
 	// Get the logger for this class
 	private static final Logger logger = LoggerFactory.getLogger(BalancingScheduler.class);
-
-	// Separate thread for managing server scaling
-	private static ScheduledExecutorService scheduler;
-
-	// Scheduled task for server scaling
-	private static ScheduledFuture<?> balancingTask;
-
-	// Server being balanced
-	private static ServerBalancerImpl balancer;
-
 	// What time unit should the scheduler use
 	private static final TimeUnit timeUnit = TimeUnit.SECONDS;
-
 	// Initial delay when starting the scheduler
 	private static final Integer DEFAULT_INITIAL_DELAY = 5;      // seconds
-	private static Integer initialDelay = DEFAULT_INITIAL_DELAY; // seconds
-
 	// How often should the scheduler balancer the servers
 	private static final Integer DEFAULT_DELAY_PERIOD = 30;      // seconds
+	// Separate thread for managing server scaling
+	private static ScheduledExecutorService scheduler;
+	// Scheduled task for server scaling
+	private static ScheduledFuture<?> balancingTask;
+	// Server being balanced
+	private static ServerBalancerImpl balancer;
+	private static Integer initialDelay = DEFAULT_INITIAL_DELAY; // seconds
 	private static Integer delayPeriod = DEFAULT_DELAY_PERIOD;   // seconds
 
-	private BalancingScheduler() {}
+
+	private BalancingScheduler() {
+	}
+
 
 	/**
 	 * Starts the load balancing scheduler. This method should be called only once.
@@ -54,9 +51,10 @@ public class BalancingScheduler {
 		initialDelay = delayPeriod;
 	}
 
+
 	/**
-	 * Restarts the load balancing scheduler with the current delay period.
-	 * This function should be used for subsequent changes to the schedule.
+	 * Restarts the load balancing scheduler with the current delay period. This function should be used for subsequent
+	 * changes to the schedule.
 	 */
 	public static void restartBalancingScheduler() {
 		if (scheduler == null || scheduler.isShutdown()) {
@@ -76,13 +74,16 @@ public class BalancingScheduler {
 		logger.info("Load Balancer successfully restarted. Now running every {}s", delayPeriod);
 	}
 
+
 	public static void setBalancer(@NotNull ServerBalancerImpl balancer) {
 		BalancingScheduler.balancer = balancer;
 	}
 
+
 	public static @NotNull Integer getDelayPeriod() {
 		return delayPeriod;
 	}
+
 
 	public static void setDelayPeriod(@NotNull Integer period) {
 		if (!period.equals(delayPeriod)) {
@@ -92,9 +93,11 @@ public class BalancingScheduler {
 		}
 	}
 
+
 	public static void resetDelayPeriod() {
 		setDelayPeriod(DEFAULT_DELAY_PERIOD);
 	}
+
 
 	public static void shutdownScheduler() {
 		if (scheduler != null && !scheduler.isShutdown()) {

@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.ethandankiw.GlobalConstants;
+import net.ethandankiw.data.LamportClock;
 import net.ethandankiw.data.http.HttpRequest;
 import net.ethandankiw.data.http.HttpRequestMethod;
 import net.ethandankiw.data.http.HttpStatusCode;
@@ -29,6 +30,9 @@ import net.ethandankiw.utils.http.HttpResponseUtils;
 public class AggregationServer {
 
 	private static final Logger logger = LoggerFactory.getLogger(AggregationServer.class);
+
+	// Lamport clock for determining the order of received requests
+	private final LamportClock clock = new LamportClock();
 
 	// Unique ID for the aggregation server
 	private final String uuid;
@@ -94,7 +98,7 @@ public class AggregationServer {
 	}
 
 
-	public void handleClientConnection(Socket client) {
+	public void handleClientConnection(Socket client, long lbClockValue) {
 		// If the server is no longer accepting requests
 		if (isDraining()) {
 			return;
@@ -107,7 +111,7 @@ public class AggregationServer {
 			// Spawn a new thread from the pool to process the client request
 			pool.submit(() -> {
 				try {
-					handleConnection(client);
+					handleConnection(client, lbClockValue);
 				} catch (Exception e) {
 					logger.error("Error occurred while handling client connection: {}", e.getMessage());
 				} finally {
@@ -121,7 +125,7 @@ public class AggregationServer {
 	}
 
 
-	private void handleConnection(Socket client) {
+	private void handleConnection(Socket client, long lbClockValue) {
 		try {
 			// Parse a possible request from the client
 			Optional<HttpRequest> optionalRequest = HttpRequestUtils.parseClientRequest(client);
@@ -130,12 +134,15 @@ public class AggregationServer {
 			if (optionalRequest.isEmpty()) {
 				logger.error("Unable to parse client request");
 				String responseBody = "Unable to parse client request";
-				HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.BAD_REQUEST, responseBody);
+				HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.BAD_REQUEST, responseBody, this.clock.getClockValue());
 				return;
 			}
 
 			// If request is valid
 			HttpRequest request = optionalRequest.get();
+
+			// Only update the lamport clock on the aggregation server when a valid request is received
+			clock.receive(lbClockValue);
 
 			// Get the request method
 			HttpRequestMethod method = request.getMethod();
@@ -153,13 +160,13 @@ public class AggregationServer {
 				case null, default -> {
 					logger.error("Invalid request method: {}", method);
 					String responseBody = "Invalid request method";
-					HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.BAD_REQUEST, responseBody);
+					HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.BAD_REQUEST, responseBody, this.clock.getClockValue());
 				}
 			}
 		} catch (Exception e) {
 			logger.error("Error handling client request: {}", e.getMessage());
 			String responseBody = "Error handling client request";
-			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.INTERNAL_SERVER_ERROR, responseBody);
+			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.INTERNAL_SERVER_ERROR, responseBody, this.clock.getClockValue());
 		} finally {
 			// Safely close the client connection
 			closeClientConnection(client);
@@ -174,7 +181,7 @@ public class AggregationServer {
 		// Check for no content
 		if (body == null || body.trim()
 								.isEmpty()) {
-			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.NO_CONTENT, "No content provided in PUT request.");
+			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.NO_CONTENT, "No content provided in PUT request.", this.clock.getClockValue());
 			return;
 		}
 
@@ -183,7 +190,7 @@ public class AggregationServer {
 
 		// Check if the JSON is valid and contains an ID
 		if (!json.containsKey("id")) {
-			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.BAD_REQUEST, "Invalid JSON data or missing 'id' key.");
+			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.BAD_REQUEST, "Invalid JSON data or missing 'id' key.", this.clock.getClockValue());
 			return;
 		}
 
@@ -195,11 +202,15 @@ public class AggregationServer {
 		// Persist the updated content store
 		FileManager.saveContentStore();
 
+		// Causal event for successful PUT to content store
+		clock.tick();
+
 		if (oldData == null) {
 			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.CREATED,
-					"Content for ID " + id + " created.");
+					"Content for ID " + id + " created.", this.clock.getClockValue());
 		} else {
-			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.OK, "Content for ID " + id + " updated.");
+			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.OK,
+					"Content for ID " + id + " updated.", this.clock.getClockValue());
 		}
 	}
 
@@ -210,9 +221,12 @@ public class AggregationServer {
 
 		// Check if there is no content to return
 		if (allData.isEmpty()) {
-			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.NO_CONTENT, "No weather data available.");
+			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.NO_CONTENT, "No weather data available.", this.clock.getClockValue());
 			return;
 		}
+
+		// Causal event for successful GET from content store
+		clock.tick();
 
 		// Create a single JSON object to hold the aggregated data
 		JSON aggregatedJSON = new JSON();
@@ -221,7 +235,8 @@ public class AggregationServer {
 		// Convert the aggregated JSON to a string
 		String responseBody = JsonUtils.parseJSONToString(aggregatedJSON);
 
-		HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.OK, responseBody);
+		// Send the aggregated JSON back to the client
+		HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.OK, responseBody, this.clock.getClockValue());
 	}
 
 

@@ -19,7 +19,14 @@ public class ServerPoolImpl implements ServerPool {
 
 	// Public constructor
 	public ServerPoolImpl(int initialCapacity) {
+		// Create a priority queue of servers
 		servers = new PriorityBlockingQueue<>(initialCapacity, new ServerLoadComparator());
+
+		// Create the default amount of aggregation servers
+		for (int i = 0; i < GlobalConstants.DEFAULT_BALANCED_SERVERS; i++) {
+			// Add a new server to the queue
+			createAndRegister();
+		}
 	}
 
 

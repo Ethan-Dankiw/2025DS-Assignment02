@@ -10,29 +10,33 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.ethandankiw.GlobalConstants;
+import net.ethandankiw.data.LamportClock;
+import net.ethandankiw.data.server.ServerPoolImpl;
 import net.ethandankiw.data.store.ContentStore;
 import net.ethandankiw.server.BalancingScheduler;
 import net.ethandankiw.server.HttpServer;
 import net.ethandankiw.server.ServerBalancerImpl;
-import net.ethandankiw.data.server.ServerPoolImpl;
 import net.ethandankiw.utils.SocketUtils;
 
 public class LoadBalancer {
 
-	// Get the logger for this class
+	// Logger for this class
 	private static final Logger logger = LoggerFactory.getLogger(LoadBalancer.class);
 
-	// Create a thread pool for handling client connections
+	// Lamport clock for determining the order of received requests
+	private static final LamportClock clock = new LamportClock();
+
+	// Thread pool for handling client connections
 	private static final ExecutorService clientRequestPool = Executors.newFixedThreadPool(100);
 
-	private static ServerPoolImpl serverPool = new ServerPoolImpl(GlobalConstants.DEFAULT_BALANCED_SERVERS);
+	// Server pool of aggregation servers
+	private static ServerPoolImpl serverPool;
 
-	// Store the server that is having its requests balanced
-	private static HttpServer listener;
+	// HTTP server that listens for requests
+	private static HttpServer clientListener;
 
 
 	public static void main(String[] args) {
-
 		// Port to listen for requests on
 		// Default: 4567
 		Integer serverPort = GlobalConstants.SERVER_PORT;
@@ -50,19 +54,13 @@ public class LoadBalancer {
 		}
 
 		// Create a new HTTP server
-		listener = new HttpServer(LoadBalancer.class.getSimpleName(), serverPort);
+		clientListener = new HttpServer(LoadBalancer.class.getSimpleName(), serverPort);
 
 		// Initialise the server
-		listener.start();
+		clientListener.start();
 
 		// Create a new server pool
 		serverPool = new ServerPoolImpl(GlobalConstants.DEFAULT_BALANCED_SERVERS);
-
-		// Create the default amount of aggregation servers
-		for (int i = 0; i < GlobalConstants.DEFAULT_BALANCED_SERVERS; i++) {
-			// Add a new server to the queue
-			serverPool.createAndRegister();
-		}
 
 		// Create a new server scaler
 		ServerBalancerImpl serverBalancer = new ServerBalancerImpl(serverPool);
@@ -86,7 +84,7 @@ public class LoadBalancer {
 
 	static void startAcceptingRequests() {
 		// Get the socket from the HTTP server
-		ServerSocket serverSocket = listener.getSocket();
+		ServerSocket serverSocket = clientListener.getSocket();
 
 		// If the socket doesn't exist
 		if (serverSocket == null) {
@@ -108,6 +106,9 @@ public class LoadBalancer {
 			// Get the connection
 			Socket client = optionalConnection.get();
 
+			// Increment the lamport clock per client request
+			clock.tick();
+
 			// Handle the client request on a separate thread
 			clientRequestPool.submit(() -> handleClient(client));
 		}
@@ -118,7 +119,7 @@ public class LoadBalancer {
 		// Get the first server that is accepting requests with the least load
 		AggregationServer leastLoaded = serverPool.getAvailableServer();
 
-		// If the server exists, handle the client's request
-		leastLoaded.handleClientConnection(client);
+		// Handle the client's request on the server
+		leastLoaded.handleClientConnection(client, clock.getClockValue());
 	}
 }

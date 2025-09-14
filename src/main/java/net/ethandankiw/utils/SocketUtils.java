@@ -56,13 +56,13 @@ public class SocketUtils {
 		return Optional.empty();
 	}
 
+
 	/**
 	 * Opens a socket connection from a client to a server.
 	 *
 	 * @param serverAddress The IP address or hostname of the server.
 	 * @param serverPort The port number of the server.
-	 * @return An Optional containing the client socket if the connection is successful,
-	 * otherwise an empty Optional.
+	 * @return An Optional containing the client socket if the connection is successful, otherwise an empty Optional.
 	 */
 	public static Optional<Socket> createClientSocket(String serverAddress, int serverPort) {
 		try {
@@ -74,6 +74,7 @@ public class SocketUtils {
 			return Optional.empty();
 		}
 	}
+
 
 	/**
 	 * Writes a string message to a socket.
@@ -96,6 +97,7 @@ public class SocketUtils {
 		}
 	}
 
+
 	/**
 	 * Reads all available text from a socket until the end of the stream is reached.
 	 *
@@ -110,7 +112,8 @@ public class SocketUtils {
 			String line;
 
 			while ((line = reader.readLine()) != null) {
-				fullMessage.append(line).append("\n");
+				fullMessage.append(line)
+						   .append("\n");
 			}
 
 			if (!fullMessage.isEmpty()) {

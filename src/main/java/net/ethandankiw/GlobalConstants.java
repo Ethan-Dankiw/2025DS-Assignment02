@@ -32,4 +32,7 @@ public enum GlobalConstants {
 
 	// Version of HTTP used for requests
 	public static final String HTTP_VERSION = "HTTP/1.1";
+
+	// Define the header key for lamport clock values
+	public static final String LAMPORT_CLOCK_HEADER = "lamport-clock";
 }
