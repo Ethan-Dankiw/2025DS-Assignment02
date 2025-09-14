@@ -54,7 +54,8 @@ public class ContentStore {
 	 * Gets the JSON data for a specific station ID.
 	 *
 	 * @param id The station ID.
-	 * @return An Optional containing the JSON data, or an empty Optional if not found.
+	 * @return An Optional containing the JSON data, or an empty Optional if not
+	 * found.
 	 */
 	public static synchronized JSON get(String id) {
 		WeatherData weatherData = data.get(id);
@@ -95,8 +96,8 @@ public class ContentStore {
 
 
 	/**
-	 * Loads the content store from the persistence layer (disk). This method is designed to be called once on server
-	 * startup.
+	 * Loads the content store from the persistence layer (disk). This method is
+	 * designed to be called once on server startup.
 	 */
 	public static void loadFromDisk() {
 		FileManager.loadContentStore();
@@ -127,6 +128,7 @@ public class ContentStore {
 		logger.info("Content store expiry task shut down.");
 	}
 
+
 	/**
 	 * Starts a background thread to process requests from the queue.
 	 */
@@ -140,7 +142,8 @@ public class ContentStore {
 					processRequest(request);
 					processPermit.release();
 				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
+					Thread.currentThread()
+						  .interrupt();
 					logger.error("Request processor thread interrupted.", e);
 					break;
 				}
@@ -150,6 +153,7 @@ public class ContentStore {
 		processorThread.start();
 		logger.info("Content store processor thread started.");
 	}
+
 
 	private static void processRequest(ContentRequest request) {
 		// This is where the old put logic goes

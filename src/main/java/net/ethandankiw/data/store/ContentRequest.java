@@ -5,9 +5,11 @@ import java.util.Objects;
 import net.ethandankiw.data.http.JSON;
 
 public class ContentRequest implements Comparable<ContentRequest> {
+
 	private final String id;
 	private final JSON json;
 	private final long lamportClock;
+
 
 	public ContentRequest(String id, JSON json, long lamportClock) {
 		this.id = id;
@@ -15,22 +17,27 @@ public class ContentRequest implements Comparable<ContentRequest> {
 		this.lamportClock = lamportClock;
 	}
 
+
 	public String getId() {
 		return id;
 	}
+
 
 	public JSON getJson() {
 		return json;
 	}
 
+
 	public long getLamportClock() {
 		return lamportClock;
 	}
+
 
 	@Override
 	public int compareTo(ContentRequest other) {
 		return Long.compare(this.lamportClock, other.lamportClock);
 	}
+
 
 	@Override
 	public boolean equals(Object obj) {
@@ -41,9 +48,10 @@ public class ContentRequest implements Comparable<ContentRequest> {
 			return false;
 		}
 		ContentRequest other = (ContentRequest) obj;
-		return Objects.equals(this.id, other.id) &&
-				Objects.equals(this.json, other.json);
+		return Objects.equals(this.id, other.id)
+				&& Objects.equals(this.json, other.json);
 	}
+
 
 	@Override
 	public int hashCode() {

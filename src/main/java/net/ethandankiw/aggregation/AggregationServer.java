@@ -68,7 +68,8 @@ public class AggregationServer {
 	// Get the current load of the server as a percentage
 	public Double getLoad() {
 		// Calculate the server load as a percentage out of 100
-		return (double) getActiveRequestsCount() / (double) GlobalConstants.MAX_THREADS_FOR_CLIENT_REQUESTS;
+		return (double) getActiveRequestsCount()
+				/ (double) GlobalConstants.MAX_THREADS_FOR_CLIENT_REQUESTS;
 	}
 
 
@@ -119,7 +120,6 @@ public class AggregationServer {
 
 					// Update the load balancer clock value
 					lbClock.receive(clock.getClockValue());
-
 
 				} catch (Exception e) {
 					logger.error("Error occurred while handling client connection: {}", e.getMessage());
@@ -221,7 +221,8 @@ public class AggregationServer {
 		// If the data did not exist before putting in the content store
 		if (!exists) {
 			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.CREATED,
-					"Content for ID " + id + " created.", clock.getClockValue());
+					"Content for ID " + id
+							+ " created.", clock.getClockValue());
 			return;
 		}
 

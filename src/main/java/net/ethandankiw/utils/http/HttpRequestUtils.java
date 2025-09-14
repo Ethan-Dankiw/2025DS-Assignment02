@@ -142,7 +142,8 @@ public class HttpRequestUtils {
 			String headerLine;
 
 			// Loop over the header fields until an empty line or EOF is reached
-			while ((headerLine = fromClient.readLine()) != null && !headerLine.isBlank()) {
+			while ((headerLine = fromClient.readLine()) != null
+					&& !headerLine.isBlank()) {
 				// Otherwise parse header fields
 				AbstractMap.SimpleEntry<String, String> header = parseSingleHeader(headerLine);
 				headers.put(header.getKey()

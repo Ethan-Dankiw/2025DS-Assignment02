@@ -61,11 +61,13 @@ public class JsonUtils {
 
 
 	/**
-	 * Reads a file that contains a single JSON object and parses it into a JSON object. This method is designed for
-	 * files that are themselves valid JSON.
+	 * Reads a file that contains a single JSON object and parses it into a JSON
+	 * object. This method is designed for files that are themselves valid
+	 * JSON.
 	 *
 	 * @param file The file containing the JSON string.
-	 * @return A JSON object with the parsed key-value pairs, or an empty JSON object if parsing fails.
+	 * @return A JSON object with the parsed key-value pairs, or an empty JSON
+	 * object if parsing fails.
 	 */
 	public static JSON parseJsonFileToJson(File file) {
 		try {

@@ -69,13 +69,13 @@ public class HttpRequest {
 	}
 
 
-	public String getHeaderValue(String key) {
-		return headers.get(key);
+	public void setHeaders(Map<String, String> headers) {
+		this.headers = headers;
 	}
 
 
-	public void setHeaders(Map<String, String> headers) {
-		this.headers = headers;
+	public String getHeaderValue(String key) {
+		return headers.get(key);
 	}
 
 

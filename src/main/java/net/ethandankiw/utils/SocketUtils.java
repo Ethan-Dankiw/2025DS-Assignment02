@@ -62,7 +62,8 @@ public class SocketUtils {
 	 *
 	 * @param serverAddress The IP address or hostname of the server.
 	 * @param serverPort The port number of the server.
-	 * @return An Optional containing the client socket if the connection is successful, otherwise an empty Optional.
+	 * @return An Optional containing the client socket if the connection is
+	 * successful, otherwise an empty Optional.
 	 */
 	public static Optional<Socket> createClientSocket(String serverAddress, int serverPort) {
 		try {
@@ -99,10 +100,12 @@ public class SocketUtils {
 
 
 	/**
-	 * Reads all available text from a socket until the end of the stream is reached.
+	 * Reads all available text from a socket until the end of the stream is
+	 * reached.
 	 *
 	 * @param socket The socket to read from.
-	 * @return An Optional containing the entire read string if successful, otherwise an empty Optional.
+	 * @return An Optional containing the entire read string if successful,
+	 * otherwise an empty Optional.
 	 */
 	public static Optional<String> readFromSocket(Socket socket) {
 		try {

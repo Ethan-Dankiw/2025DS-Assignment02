@@ -34,7 +34,8 @@ public class BalancingScheduler {
 
 
 	/**
-	 * Starts the load balancing scheduler. This method should be called only once.
+	 * Starts the load balancing scheduler. This method should be called only
+	 * once.
 	 */
 	public static void startBalancingScheduler() {
 		// Initialize the scheduler once
@@ -53,8 +54,8 @@ public class BalancingScheduler {
 
 
 	/**
-	 * Restarts the load balancing scheduler with the current delay period. This function should be used for subsequent
-	 * changes to the schedule.
+	 * Restarts the load balancing scheduler with the current delay period. This
+	 * function should be used for subsequent changes to the schedule.
 	 */
 	public static void restartBalancingScheduler() {
 		if (scheduler == null || scheduler.isShutdown()) {

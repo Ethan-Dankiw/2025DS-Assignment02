@@ -29,8 +29,9 @@ public class FileManager {
 
 
 	/**
-	 * Saves all data from the ContentStore to individual files in the storage directory. Each file is named after the
-	 * weather station's ID and contains the JSON data.
+	 * Saves all data from the ContentStore to individual files in the storage
+	 * directory. Each file is named after the weather station's ID and contains
+	 * the JSON data.
 	 */
 	public static void saveContentStore() {
 		File dir = new File(CONTENT_STORE_DIR);
@@ -55,10 +56,12 @@ public class FileManager {
 	/**
 	 * Deletes a specific weather data file from the content store.
 	 *
-	 * @param id The ID of the weather station whose data file should be deleted.
+	 * @param id The ID of the weather station whose data file should be
+	 * deleted.
 	 */
 	public static void deleteContentFile(String id) {
-		File file = new File(CONTENT_STORE_DIR, id + CONTENT_STORE_DATA_EXTENSION);
+		File file = new File(CONTENT_STORE_DIR,
+				id + CONTENT_STORE_DATA_EXTENSION);
 		if (file.exists()) {
 			if (file.delete()) {
 				logger.info("Deleted expired weather data file for ID: {}", id);
@@ -70,8 +73,8 @@ public class FileManager {
 
 
 	/**
-	 * Loads all JSON files from the storage directory and populates the ContentStore. This is used for server recovery
-	 * after a crash.
+	 * Loads all JSON files from the storage directory and populates the
+	 * ContentStore. This is used for server recovery after a crash.
 	 */
 	public static void loadContentStore() {
 		File dir = new File(CONTENT_STORE_DIR);

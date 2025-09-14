@@ -67,7 +67,8 @@ public class ServerPoolImpl implements ServerPool {
 
 
 	/**
-	 * Creates a new aggregation server, registers it in the pool, and returns the newly created instance.
+	 * Creates a new aggregation server, registers it in the pool, and returns
+	 * the newly created instance.
 	 *
 	 * @return the newly created and registered server
 	 */
@@ -88,10 +89,12 @@ public class ServerPoolImpl implements ServerPool {
 	/**
 	 * Returns a server that is available to handle new requests.
 	 * <p>
-	 * By default, this is the server with the lowest current request load. If all existing servers are at capacity, a
-	 * new server will be created and returned.
+	 * By default, this is the server with the lowest current request load. If
+	 * all existing servers are at capacity, a new server will be created and
+	 * returned.
 	 *
-	 * @return the least-loaded available server, or a newly created server if none are available
+	 * @return the least-loaded available server, or a newly created server if
+	 * none are available
 	 */
 	@Override
 	public AggregationServer getAvailableServer() {
@@ -141,7 +144,8 @@ public class ServerPoolImpl implements ServerPool {
 
 
 	/**
-	 * Returns the server with the lowest current request load without removing it from the pool.
+	 * Returns the server with the lowest current request load without removing
+	 * it from the pool.
 	 *
 	 * @return the least-loaded server, or {@code null} if none are available
 	 */
@@ -152,7 +156,8 @@ public class ServerPoolImpl implements ServerPool {
 
 
 	/**
-	 * Removes and returns the server with the lowest current request load from the pool.
+	 * Removes and returns the server with the lowest current request load from
+	 * the pool.
 	 *
 	 * @return the removed server, or {@code null} if none are available
 	 */

@@ -9,7 +9,7 @@ import net.ethandankiw.GlobalConstants;
 public class HttpResponse {
 
 	private final String version;
-	private final Map<String, String> headers;
+	private Map<String, String> headers;
 	private HttpStatusCode status;
 	private String body;
 
@@ -21,6 +21,10 @@ public class HttpResponse {
 		body = "";
 	}
 
+
+	public Integer getStatusCode() {
+		return status.getStatusCode();
+	}
 
 	public HttpStatusCode getStatus() {
 		return status;
@@ -39,6 +43,11 @@ public class HttpResponse {
 
 	public Map<String, String> getHeaders() {
 		return headers;
+	}
+
+
+	public void setHeaders(Map<String, String> headers) {
+		this.headers = headers;
 	}
 
 

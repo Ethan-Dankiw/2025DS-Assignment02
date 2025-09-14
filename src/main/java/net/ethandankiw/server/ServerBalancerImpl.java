@@ -13,14 +13,12 @@ public class ServerBalancerImpl implements ServerBalancer {
 
 	// Get the logger for this class
 	private static final Logger logger = LoggerFactory.getLogger(ServerBalancerImpl.class);
-
-	// Store the server pool
-	private final ServerPool serverPool;
-
 	// Count the number of time the balancer has detected high server load
 	private static final Integer HIGH_LOAD_COUNT_THRESHOLD = 5;
 	// Count the number of time the balancer has detected low server load
 	private static final Integer LOW_LOAD_COUNT_THRESHOLD = 3;
+	// Store the server pool
+	private final ServerPool serverPool;
 	private Integer highLoadCount = 0;
 	private Integer lowLoadCount = 0;
 
@@ -52,8 +50,10 @@ public class ServerBalancerImpl implements ServerBalancer {
 
 	private void handleServerBalance(Double serverLoad) {
 		// Define strings for the thresholds
-		String creationThreshold = String.format("%.2f", GlobalConstants.SERVER_CREATION_THRESHOLD * 100);
-		String removalThreshold = String.format("%.2f", GlobalConstants.SERVER_REMOVAL_THRESHOLD * 100);
+		String creationThreshold = String.format("%.2f",
+				GlobalConstants.SERVER_CREATION_THRESHOLD * 100);
+		String removalThreshold = String.format("%.2f",
+				GlobalConstants.SERVER_REMOVAL_THRESHOLD * 100);
 
 		// If the server load is getting high
 		if (serverLoad > GlobalConstants.SERVER_CREATION_THRESHOLD) {
