@@ -93,7 +93,7 @@ public class FileManager {
 					  // Check if the JSON is valid and contains an ID
 					  if (json.containsKey("id")) {
 						  // Put the data into the ContentStore
-						  ContentStore.put(json.getValue("id"), json);
+						  ContentStore.put(json.getValue("id"), json, 0);
 						  logger.info("Loaded weather data for ID {} from file.", json.getValue("id"));
 					  } else {
 						  logger.warn("Skipping file '{}' due to invalid JSON or missing 'id'.", file.getName());

@@ -77,6 +77,9 @@ public class LoadBalancer {
 		// Start the Content Store expiry task
 		ContentStore.startExpiryTask();
 
+		// Start processing content store requests
+		ContentStore.startProcessorThread();
+
 		// Start balancing the incoming requests
 		startAcceptingRequests();
 	}
@@ -106,9 +109,6 @@ public class LoadBalancer {
 			// Get the connection
 			Socket client = optionalConnection.get();
 
-			// Increment the lamport clock per client request
-			clock.tick();
-
 			// Handle the client request on a separate thread
 			clientRequestPool.submit(() -> handleClient(client));
 		}
@@ -120,6 +120,6 @@ public class LoadBalancer {
 		AggregationServer leastLoaded = serverPool.getAvailableServer();
 
 		// Handle the client's request on the server
-		leastLoaded.handleClientConnection(client, clock.getClockValue());
+		leastLoaded.handleClientConnection(client, clock);
 	}
 }

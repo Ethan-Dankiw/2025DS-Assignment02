@@ -22,6 +22,12 @@ public class LamportClock {
 	}
 
 
+	public void add(long value) {
+		long old = this.clock.getAndAdd(value);
+		logger.debug("Clock updated from {} to {}", old, getClockValue());
+	}
+
+
 	public void tick() {
 		this.clock.incrementAndGet();
 		logger.debug("Clock ticked to {}", this.clock);
@@ -31,7 +37,7 @@ public class LamportClock {
 	public synchronized void receive(long receivedClock) {
 		// Update the lamport clock according to the received clock value
 		this.updateClock(receivedClock);
-		logger.debug("Clock received value {}, new clock is {}", receivedClock, this.clock);
+		logger.debug("Clock received value {}, new clock is {}", receivedClock, getClockValue());
 	}
 
 

@@ -48,6 +48,9 @@ public class ContentServer {
 			request.addHeader("User-Agent", "ATOMClient/1/0");
 			request.addHeader("Content-Type", "application/json");
 
+			// Initialise the lamport clock to 0
+			request.addHeader(GlobalConstants.LAMPORT_CLOCK_HEADER, String.valueOf(0));
+
 			// Parse the JSON into a string
 			String jsonData = JsonUtils.parseJSONToString(jsonWeatherData);
 

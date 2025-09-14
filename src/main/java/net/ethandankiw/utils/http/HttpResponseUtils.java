@@ -22,7 +22,8 @@ public class HttpResponseUtils {
 
 	public static void generateAndSendResponse(Socket client, HttpStatusCode status, @NotNull String body, long clockValue) {
 		// Generate a response
-		HttpResponse response = HttpResponseUtils.generateResponse(status, body, clockValue);
+		// Increment clock value as response counts as causal event
+		HttpResponse response = HttpResponseUtils.generateResponse(status, body, clockValue + 1);
 
 		// Send the complete response to the client
 		boolean success = SocketUtils.writeToSocket(client, response.toString());

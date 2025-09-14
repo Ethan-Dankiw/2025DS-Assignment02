@@ -4,7 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -17,8 +19,14 @@ public class ContentStore {
 
 	private static final Logger logger = LoggerFactory.getLogger(ContentStore.class);
 
+	// Queue for incoming put requests, sorted by Lamport clock
+	private static final PriorityBlockingQueue<ContentRequest> requestQueue = new PriorityBlockingQueue<>();
+
 	// Using a ConcurrentHashMap for thread-safe access
 	private static final ConcurrentHashMap<String, WeatherData> data = new ConcurrentHashMap<>();
+
+	// A semaphore to control the rate of processing requests
+	private static final Semaphore processPermit = new Semaphore(1);
 
 	private static final int EXPIRY_SECONDS = 30;
 
@@ -31,19 +39,14 @@ public class ContentStore {
 
 
 	/**
-	 * Puts or updates weather data for a specific station ID.
+	 * Adds a new request to the processing queue.
 	 *
 	 * @param id The station ID.
 	 * @param json The JSON data to store.
-	 * @return The previous JSON object for the given ID, or null if it was a new entry.
+	 * @param lamportClock The Lamport clock timestamp of the event.
 	 */
-	public static synchronized JSON put(String id, JSON json) {
-
-		WeatherData oldData = data.put(id, new WeatherData(json));
-		if (oldData != null) {
-			return oldData.getJson();
-		}
-		return null;
+	public static synchronized void put(String id, JSON json, long lamportClock) {
+		requestQueue.add(new ContentRequest(id, json, lamportClock));
 	}
 
 
@@ -56,6 +59,17 @@ public class ContentStore {
 	public static synchronized JSON get(String id) {
 		WeatherData weatherData = data.get(id);
 		return weatherData != null ? weatherData.getJson() : null;
+	}
+
+
+	/**
+	 * Check if JSON data for a specific station ID already exists.
+	 *
+	 * @param id The station ID.
+	 * @return a boolean for if the data exists
+	 */
+	public static synchronized boolean exists(String id) {
+		return data.containsKey(id);
 	}
 
 
@@ -111,5 +125,40 @@ public class ContentStore {
 	public static void shutdown() {
 		scheduler.shutdown();
 		logger.info("Content store expiry task shut down.");
+	}
+
+	/**
+	 * Starts a background thread to process requests from the queue.
+	 */
+	public static void startProcessorThread() {
+		Thread processorThread = new Thread(() -> {
+			while (true) {
+				try {
+					ContentRequest request = requestQueue.take();
+					// Acquire a permit to simulate a delay between processing requests
+					processPermit.acquire();
+					processRequest(request);
+					processPermit.release();
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					logger.error("Request processor thread interrupted.", e);
+					break;
+				}
+			}
+		}, "ContentStoreProcessor");
+		processorThread.setDaemon(true);
+		processorThread.start();
+		logger.info("Content store processor thread started.");
+	}
+
+	private static void processRequest(ContentRequest request) {
+		// This is where the old put logic goes
+		WeatherData oldData = data.put(request.getId(), new WeatherData(request.getJson(), request.getLamportClock()));
+		FileManager.saveContentStore();
+		if (oldData != null) {
+			logger.info("Content for ID {} updated. Lamport Clock: {}", request.getId(), request.getLamportClock());
+		} else {
+			logger.info("Content for ID {} created. Lamport Clock: {}", request.getId(), request.getLamportClock());
+		}
 	}
 }
