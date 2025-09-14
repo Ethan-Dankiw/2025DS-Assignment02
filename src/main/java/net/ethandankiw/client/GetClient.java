@@ -1,7 +1,9 @@
 package net.ethandankiw.client;
 
+import java.io.IOException;
 import java.net.Socket;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +26,9 @@ public class GetClient {
 	// Define the starting delay for failed request (grows with exponential backoff)
 	private static final Integer STARTING_DELAY = 1; // seconds
 
-	// Define how long should the GET client wait before determining a request as failed
-	private static final Integer TIMEOUT = 5; // seconds
+	// Define teh starting timeout for how long the GET client should wait
+	// after sending a request before determining it as failed on duration alone
+	private static final Integer STARTING_TIMEOUT = 5; // seconds
 
 
 	public static void main(String[] args) {
@@ -48,67 +51,96 @@ public class GetClient {
 			// Log an attempt is being made
 			logger.debug("Attempting to send request to the server: {}/{}", attempt, MAX_ATTEMPTS);
 
-			// Open a socket connection to the content server
-			Optional<Socket> optionalServerConnection = SocketUtils.createClientSocket(GlobalConstants.SERVER_IP, GlobalConstants.SERVER_PORT);
+			// Attempt to make a request to the server
+			Optional<HttpResponse> optionalResponse = attemptRequest(request, attempt);
 
-			// If the connection doesn't exist
-			if (optionalServerConnection.isEmpty()) {
-				logger.error("Unable to make a connection to the server");
-				return;
+			// If there is a response from the server
+			if (optionalResponse.isPresent()) {
+				// Get the response
+				HttpResponse response = optionalResponse.get();
+
+				// Get the response status code
+				Integer statusCode = response.getStatusCode();
+
+				// If the response is successful
+				if (HttpStatusCode.isSuccess(statusCode)) {
+					logger.info("Successful response received");
+					// No need to retry a successful response
+					return;
+				}
+
+				// If the response is not successful and cant be retried
+				if (!HttpStatusCode.isRetryable(statusCode)) {
+					logger.error("Unsuccessful response cannot be retried: {}", statusCode);
+					return;
+				}
 			}
 
-			// Get the client -> server socket connection
-			Socket serverConnection = optionalServerConnection.get();
+			// If there is no response from the server
+			// Or there is a response that can be retried
+
+			// Check if there are no more retries allowed
+			if (attempt >= MAX_ATTEMPTS) {
+				break;
+			}
+
+			// If there is an available retry
+
+			// Calculate how long the GET client should wait before retrying
+			long delay = (long) (STARTING_DELAY * Math.pow(2, attempt - 1d));
+			logger.info("Retrying request in {} seconds...", delay);
+
+			// Delay the response to allow the server to recover
+			try {
+				TimeUnit.SECONDS.sleep(delay);
+			} catch (InterruptedException e) {
+				Thread.currentThread()
+					  .interrupt();
+				logger.error("Thread interrupted during sleep", e);
+				return;
+			}
+		}
+
+		// If all attempts were exhausted
+		logger.error("All {} request attempts were made, request failing.", MAX_ATTEMPTS);
+	}
+
+
+	private static Optional<HttpResponse> attemptRequest(HttpRequest request, int attempt) {
+		// Open a socket connection to the content server
+		Optional<Socket> optionalServerConnection = SocketUtils.createClientSocket(GlobalConstants.SERVER_IP, GlobalConstants.SERVER_PORT);
+
+		// If the connection doesn't exist
+		if (optionalServerConnection.isEmpty()) {
+			logger.error("Unable to make a connection to the server");
+			return Optional.empty();
+		}
+
+		// Get the client -> server socket connection
+		try (Socket serverConnection = optionalServerConnection.get()) {
+			// Calculate how long the GET client should wait for the timeout
+			// With exponential backoff
+			int timeout = (int) (STARTING_TIMEOUT * Math.pow(2, attempt - 1d));
+
+			// Define the request timeout on the socket
+			serverConnection.setSoTimeout(timeout * 1000);
 
 			// Make the request by writing to the client -> server socket
 			boolean success = SocketUtils.writeToSocket(serverConnection, request.toString());
 
 			// If the request was not successful
 			if (!success) {
-				logger.error("Request to server {} was unsuccessful",
-						serverConnection.getInetAddress());
-				return;
+				logger.error("Request to server {} was unsuccessful", serverConnection.getInetAddress());
+				return Optional.empty();
 			}
 
-			// Parse the response from the server
-			Optional<HttpResponse> optionalResponse =
-					HttpResponseUtils.parseServerResponse(serverConnection);
-
-			// If there is not a valid response
-			if (optionalResponse.isEmpty()) {
-				logger.error("Response from server {} is invalid",
-						serverConnection.getInetAddress());
-				return;
-			}
-
-			// Get the response
-			HttpResponse response = optionalResponse.get();
-
-			// Get the response status code
-			Integer code = response.getStatusCode();
-
-			// If the response is successful
-			if (HttpStatusCode.isSuccess(code)) {
-				logger.info("Successful response received");
-				// No need to retry a successful response
-				return;
-			}
-
-			// If the response is not successful and cant be retried
-			if (!canRetry(attempt, code)) {
-				logger.error("Unsuccessful response cannot be retried: {}",code);
-				return;
-			}
-		}
-	}
-
-	private static boolean canRetry(int attempt, int statusCode) {
-		// Check if the request can be retried based on attempts
-		if (attempt >= MAX_ATTEMPTS) {
-			return false;
+			// Parse and return the response from the server
+			return HttpResponseUtils.parseServerResponse(serverConnection);
+		} catch (IOException ioe) {
+			logger.error("Error occurred when closing connection to the server");
 		}
 
-		// Check if the request can be retried based on status code
-		return HttpStatusCode.isRetryable(statusCode);
+		// Default to no response if an error occurs
+		return Optional.empty();
 	}
 }
