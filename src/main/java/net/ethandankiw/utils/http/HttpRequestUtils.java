@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.ethandankiw.data.http.HttpRequest;
+import net.ethandankiw.data.http.HttpRequestMethod;
 
 public class HttpRequestUtils {
 
@@ -75,6 +76,11 @@ public class HttpRequestUtils {
 
 		// Store the headers on the request object
 		request.setHeaders(headers);
+
+		// If the request is a GET request, there is no request body
+		if (request.getMethod() == HttpRequestMethod.GET) {
+			return Optional.of(request);
+		}
 
 		try {
 			// Get the content length of the body

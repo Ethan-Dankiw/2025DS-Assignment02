@@ -72,6 +72,42 @@ public class FileManager {
 	}
 
 
+	public static void deleteAllContentFiles() {
+		// Get the file directory for the stored files
+		File dir = new File(CONTENT_STORE_DIR);
+
+		// If the directory does not exist
+		if (!dir.exists()) {
+			logger.warn("Content Store directory does not exist");
+			return;
+		}
+
+		// If the directory is not a directory
+		if (!dir.isDirectory()) {
+			logger.warn("Content Store directory exists, but is not a directory");
+			return;
+		}
+
+		// Get all the files in the dir
+		File[] files = dir.listFiles();
+
+		// If there are no files
+		if (files == null) {
+			return;
+		}
+
+		// For all the files
+		for (File file: files) {
+			boolean success = file.delete();
+
+			// If file deletion was not a success
+			if (!success) {
+				logger.error("Unable to delete file: {}", file.getName());
+			}
+		}
+	}
+
+
 	/**
 	 * Loads all JSON files from the storage directory and populates the
 	 * ContentStore. This is used for server recovery after a crash.

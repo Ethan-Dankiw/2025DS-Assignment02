@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.ethandankiw.GlobalConstants;
+import net.ethandankiw.data.LamportClock;
 import net.ethandankiw.data.http.HttpResponse;
 import net.ethandankiw.data.http.HttpStatusCode;
 import net.ethandankiw.utils.SocketUtils;
@@ -24,11 +25,11 @@ public class HttpResponseUtils {
 	}
 
 
-	public static void generateAndSendResponse(Socket client, HttpStatusCode status, @NotNull String body, long clockValue) {
+	public static void generateAndSendResponse(Socket client, HttpStatusCode status, @NotNull String body, LamportClock clock) {
 		// Generate a response
 		// Increment clock value as response counts as causal event
-		HttpResponse response = HttpResponseUtils.generateResponse(status, body,
-				clockValue + 1);
+		clock.tick();
+		HttpResponse response = HttpResponseUtils.generateResponse(status, body, clock.getClockValue());
 
 		// Send the complete response to the client
 		boolean success = SocketUtils.writeToSocket(client, response.toString());
@@ -155,6 +156,12 @@ public class HttpResponseUtils {
 			return Optional.empty();
 		}
 
+		// If the response has no response body
+		// Status Code 204 == No Content
+		if (response.getStatusCode() == 204) {
+			return Optional.of(response);
+		}
+
 		// Verify that the response body exists
 		if (body == null || body.isBlank()) {
 			logger.error("Unable to parse response body from server");
@@ -174,7 +181,7 @@ public class HttpResponseUtils {
 		List<String> partitions = new ArrayList<>();
 
 		// Split the response string into response status line + rest of response
-		String[] splitResponse = responseStr.split("\r\n", 1);
+		String[] splitResponse = responseStr.split("\n", 2);
 
 		// If split response is not partitioned correctly
 		if (splitResponse.length != 2) {
@@ -190,7 +197,7 @@ public class HttpResponseUtils {
 		partitions.add(statusLine);
 
 		// Split the remaining header + body
-		String[] splitHeaderBody = headerBody.split("\r\n\r\n", 1);
+		String[] splitHeaderBody = headerBody.split("\n\n", 2);
 
 		// If split header + body is not partitioned correctly
 		if (splitHeaderBody.length != 2) {
@@ -217,7 +224,7 @@ public class HttpResponseUtils {
 		}
 
 		// Split the status line by spaces
-		String[] splitStatusLine = statusLine.split(" ");
+		String[] splitStatusLine = statusLine.split(" ", 3);
 
 		// If the split status line is not partitioned correctly
 		if (splitStatusLine.length != 3) {
@@ -226,7 +233,7 @@ public class HttpResponseUtils {
 		}
 
 		// Get the status code from the status line
-		Integer code = Integer.getInteger(splitStatusLine[1]);
+		int code = Integer.parseInt(splitStatusLine[1]);
 
 		// Get the status object based on the code
 		HttpStatusCode statusCode = HttpStatusCode.valueOf(code);
@@ -251,8 +258,7 @@ public class HttpResponseUtils {
 		}
 
 		// Use header utils to parse headers
-		Optional<Map<String, String>> optionalHeaders =
-				HttpHeaderUtils.parseHeaders(headersLine);
+		Optional<Map<String, String>> optionalHeaders = HttpHeaderUtils.parseHeaders(headersLine);
 
 		// If the headers cannot be parsed
 		if (optionalHeaders.isEmpty()) {

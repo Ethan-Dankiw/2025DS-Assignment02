@@ -100,10 +100,14 @@ public class BalancingScheduler {
 	}
 
 
-	public static void shutdownScheduler() {
+	public static void shutdown() {
 		if (scheduler != null && !scheduler.isShutdown()) {
 			scheduler.shutdown();
 			logger.info("Load Balancer scheduler shut down.");
 		}
+	}
+
+	public static void reset() {
+		scheduler = null;
 	}
 }

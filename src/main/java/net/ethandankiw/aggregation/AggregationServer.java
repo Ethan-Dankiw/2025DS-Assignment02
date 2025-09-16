@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -120,7 +122,6 @@ public class AggregationServer {
 
 					// Update the load balancer clock value
 					lbClock.receive(clock.getClockValue());
-
 				} catch (Exception e) {
 					logger.error("Error occurred while handling client connection: {}", e.getMessage());
 				} finally {
@@ -143,7 +144,7 @@ public class AggregationServer {
 			if (optionalRequest.isEmpty()) {
 				logger.error("Unable to parse client request");
 				String responseBody = "Unable to parse client request";
-				HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.BAD_REQUEST, responseBody, clock.getClockValue());
+				HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.BAD_REQUEST, responseBody, clock);
 				return;
 			}
 
@@ -157,7 +158,7 @@ public class AggregationServer {
 			switch (method) {
 				case GET -> {
 					logger.debug("Detected GET request");
-					handleGETRequest(client);
+					handleGETRequest(client, request);
 				}
 				case PUT -> {
 					logger.debug("Detected PUT request");
@@ -166,13 +167,13 @@ public class AggregationServer {
 				case null, default -> {
 					logger.error("Invalid request method: {}", method);
 					String responseBody = "Invalid request method";
-					HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.BAD_REQUEST, responseBody, clock.getClockValue());
+					HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.BAD_REQUEST, responseBody, clock);
 				}
 			}
 		} catch (Exception e) {
 			logger.error("Error handling client request: {}", e.getMessage());
 			String responseBody = "Error handling client request";
-			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.INTERNAL_SERVER_ERROR, responseBody, clock.getClockValue());
+			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.INTERNAL_SERVER_ERROR, responseBody, clock);
 		} finally {
 			// Safely close the client connection
 			closeClientConnection(client);
@@ -187,7 +188,7 @@ public class AggregationServer {
 		// Check for no content
 		if (body == null || body.trim()
 								.isEmpty()) {
-			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.NO_CONTENT, "No content provided in PUT request.", clock.getClockValue());
+			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.NO_CONTENT, "No content provided in PUT request.", clock);
 			return;
 		}
 
@@ -196,7 +197,7 @@ public class AggregationServer {
 
 		// Check if the JSON is valid and contains an ID
 		if (!json.containsKey("id")) {
-			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.BAD_REQUEST, "Invalid JSON data or missing 'id' key.", clock.getClockValue());
+			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.BAD_REQUEST, "Invalid JSON data or missing 'id' key.", clock);
 			return;
 		}
 
@@ -209,37 +210,66 @@ public class AggregationServer {
 		// Update the lamport port request according to the received value
 		clock.receive(value);
 
-		// Check if the to be inserted json already exists
-		boolean exists = ContentStore.exists(id);
-
 		// Store the JSON object in the content store
-		ContentStore.put(id, json, clock.getClockValue());
+		boolean created = ContentStore.put(id, json, clock.getClockValue());
 
 		// Persist the updated content store
 		FileManager.saveContentStore();
 
 		// If the data did not exist before putting in the content store
-		if (!exists) {
+		if (created) {
 			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.CREATED,
-					"Content for ID " + id
-							+ " created.", clock.getClockValue());
+					"Content for ID " + id + " created.", clock);
 			return;
 		}
 
 		// If the data did exist
 		HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.OK,
-				"Content for ID " + id + " updated.", clock.getClockValue());
+				"Content for ID " + id + " updated.", clock);
 
 	}
 
 
-	private void handleGETRequest(Socket client) {
+	private void handleGETRequest(Socket client, HttpRequest request)
+			throws ExecutionException, InterruptedException {
+		// Parse station ID from the request path
+		String path = request.getPath();
+		int eqIdx = path.indexOf("=");
+		int dotIdx = path.indexOf(".");
+
+		// Check if the ID exists
+		if (eqIdx > 0 && dotIdx > 0) {
+			// Extract the Station ID
+			String id = path.substring(eqIdx + 1, dotIdx)
+							.trim();
+
+			// Get the JSON data for the ID
+			CompletableFuture<JSON> futureData = ContentStore.get(id, clock.getClockValue());
+
+			// Wait and extract the fetched JSON
+			JSON data = futureData.get();
+
+			// If there is no data
+			if (data == null) {
+				HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.NO_CONTENT, "No weather data available.", clock);
+				return;
+			}
+
+			// Convert the aggregated JSON to a string
+			String responseBody = JsonUtils.parseJSONToString(data);
+
+			// Send the aggregated JSON back to the client
+			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.OK, responseBody, clock);
+			return;
+		}
+
+		// If no ID is present, get all the weather data
 		// Get all data from the content store
 		Map<String, JSON> allData = ContentStore.getAll();
 
 		// Check if there is no content to return
 		if (allData.isEmpty()) {
-			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.NO_CONTENT, "No weather data available.", clock.getClockValue());
+			HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.NO_CONTENT, "No weather data available.", clock);
 			return;
 		}
 
@@ -254,7 +284,7 @@ public class AggregationServer {
 		String responseBody = JsonUtils.parseJSONToString(aggregatedJSON);
 
 		// Send the aggregated JSON back to the client
-		HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.OK, responseBody, clock.getClockValue());
+		HttpResponseUtils.generateAndSendResponse(client, HttpStatusCode.OK, responseBody, clock);
 	}
 
 

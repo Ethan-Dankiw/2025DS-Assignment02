@@ -26,6 +26,7 @@ public class HttpResponse {
 		return status.getStatusCode();
 	}
 
+
 	public HttpStatusCode getStatus() {
 		return status;
 	}
@@ -69,22 +70,21 @@ public class HttpResponse {
 	@Override
 	public String toString() {
 		// Status Line: e.g., "HTTP/1.1 200 OK"
-		String statusLine = String.format("%s %d %s", getVersion(), getStatus().getStatusCode(), getStatus().getReasonPhrase());
+		StringBuilder responseBuilder = new StringBuilder();
+		responseBuilder.append(String.format("%s %d %s\r", getVersion(), getStatus().getStatusCode(), getStatus().getReasonPhrase()));
+		responseBuilder.append("\n");
 
 		// Header lines: e.g., "Content-Type: application/json"
 		String headerStr = getHeaders().entrySet()
 									   .stream()
 									   .map(set -> String.format("%s: %s", set.getKey(), set.getValue()))
 									   .collect(Collectors.joining("\r\n")); // Use \r\n for line endings
-
-		StringBuilder responseBuilder = new StringBuilder();
-		responseBuilder.append(statusLine)
-					   .append("\r\n");
-		responseBuilder.append(headerStr)
-					   .append("\r\n");
+		responseBuilder.append(headerStr);
 		responseBuilder.append("\r\n"); // Blank line to separate headers from body
 
-		if (getBody() != null) {
+		// Add the message body
+		if (getBody() != null && !getBody().isEmpty()) {
+			responseBuilder.append("\r\n"); // Blank line to separate headers from body
 			responseBuilder.append(getBody());
 		}
 

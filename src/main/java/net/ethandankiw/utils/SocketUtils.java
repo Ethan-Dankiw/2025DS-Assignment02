@@ -50,10 +50,11 @@ public class SocketUtils {
 		} catch (IOException ioe) {
 			// Log a warning since the client connection isn't as important
 			logger.warn("Unable to make a connection to the client: {}", ioe.getMessage());
+			throw new RuntimeException(ioe);
 		}
 
 		// Default to no client connection
-		return Optional.empty();
+//		return Optional.empty();
 	}
 
 
@@ -90,7 +91,7 @@ public class SocketUtils {
 
 			writer.println(message);
 			writer.flush();
-			logger.info("Message sent to {}: \n\n{}", socket.getInetAddress(), message);
+//			logger.info("Message sent to {}:\n\n{}", socket.getInetAddress(), message);
 			return true;
 		} catch (IOException e) {
 			logger.error("Failed to write to socket {}. Error: {}", socket.getInetAddress(), e.getMessage());
@@ -120,7 +121,7 @@ public class SocketUtils {
 			}
 
 			if (!fullMessage.isEmpty()) {
-				logger.info("Message received from {}:\n{}", socket.getInetAddress(), fullMessage);
+//				logger.info("Message received from {}:\n\n{}", socket.getInetAddress(), fullMessage);
 				return Optional.of(fullMessage.toString());
 			}
 

@@ -1,5 +1,6 @@
 package net.ethandankiw.server;
 
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Optional;
 
@@ -61,5 +62,10 @@ public class HttpServer {
 	@Nullable
 	public ServerSocket getSocket() {
 		return socket;
+	}
+
+
+	public void shutdown() throws IOException {
+		this.socket.close();
 	}
 }

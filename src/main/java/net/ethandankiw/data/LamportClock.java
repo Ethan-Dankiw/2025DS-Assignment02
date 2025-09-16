@@ -12,35 +12,50 @@ public class LamportClock {
 	private final AtomicLong clock;
 
 
+	/**
+	 * Constructs a new LamportClock instance with a clock value of 0
+	 */
 	public LamportClock() {
 		this.clock = new AtomicLong();
 	}
 
 
-	public long getClockValue() {
+	/**
+	 * Returns the current value of the Lamport clock
+	 *
+	 * @return The current clock value
+	 */
+	public synchronized long getClockValue() {
 		return clock.get();
 	}
 
 
-	public void add(long value) {
-		long old = this.clock.getAndAdd(value);
-		logger.debug("Clock updated from {} to {}", old, getClockValue());
-	}
-
-
-	public void tick() {
+	/**
+	 * Increments the clock by 1
+	 */
+	public synchronized void tick() {
 		this.clock.incrementAndGet();
 		logger.debug("Clock ticked to {}", this.clock);
 	}
 
-
+	/**
+	 * Receives a clock value.
+	 * The local clock is updated to the maximum of its current value and the
+	 * received clock value + 1
+	 *
+	 * @param receivedClock The clock value received from a remote process.
+	 */
 	public synchronized void receive(long receivedClock) {
 		// Update the lamport clock according to the received clock value
 		this.updateClock(receivedClock);
 		logger.debug("Clock received value {}, new clock is {}", receivedClock, getClockValue());
 	}
 
-
+	/**
+	 * Private helper method to compare and update the clock
+	 *
+	 * @param received The clock value received from a remote process
+	 */
 	private synchronized void updateClock(long received) {
 		// Calculate the updated clock value
 		long value = this.compare(this.getClockValue(), received) + 1;
@@ -49,13 +64,23 @@ public class LamportClock {
 		this.updateClockValue(value);
 	}
 
-
+	/**
+	 * Private helper method to get the maximum of two clock values
+	 *
+	 * @param local The local clock value
+	 * @param received The received clock value
+	 * @return The maximum of the two values
+	 */
 	private synchronized long compare(long local, long received) {
 		return Math.max(local, received);
 	}
 
-
-	private void updateClockValue(long value) {
+	/**
+	 * Private helper method to update the clock value atomically
+	 *
+	 * @param value The new clock value to set
+	 */
+	private synchronized void updateClockValue(long value) {
 		this.clock.updateAndGet(current -> value);
 	}
 }
